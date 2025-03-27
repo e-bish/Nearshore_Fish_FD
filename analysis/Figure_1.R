@@ -1,10 +1,13 @@
+#######################
+## Create Figure 1 map
+
+#load libraries
 library(tidyverse)
 library(here)
 library(sf)
 library(terra)
 library(cowplot)
 library(ggsflabel)
-# library(ggspatial)
 
 #Shoreline shapefile
 wa_outline <- here("data", "spatial", "WA_state_outline", "WA_state_outline.shp") %>% 
@@ -13,12 +16,6 @@ wa_outline <- here("data", "spatial", "WA_state_outline", "WA_state_outline.shp"
 shoreline <- here("data","spatial", "shorezone_shoreline_only", "shorezone_shoreline_only.shp") %>% 
   read_sf(crs = 2927) %>%  #Washington State Plane South (ft) / NAD83
   st_transform(crs = 4326)
-
-# shoreline_crop <- st_crop(shoreline, ext(c(-124, -121, 47, 49))) #crop to the region of interest
-# # plot(shoreline_crop)
-# 
-# shoreline_crop_wide <- st_crop(shoreline, ext(c(-124.2, -120, 47, 49))) #crop to the region of interest
-# plot(shoreline_crop_wide)
 
 #GPS locations for our survey stations with each ipa
 SOS_core_sites <- factor(c("FAM", "TUR", "COR", "SHR", "DOK", "EDG"), 
@@ -281,18 +278,22 @@ dok <- ggplot() +
   geom_raster(data = ccap_full_df, aes(x = x, y = y, fill = as.factor(cover))) + 
   geom_sf(data = wa_outline, fill = "transparent", linewidth = 0.5) +
   scale_fill_manual(values = land_cover_cols) +
-  geom_sf(data = SOS_sites, aes(shape = IPA), color = "magenta", size = 3) +
-  coord_sf(xlim = c(-122.5, -122.4), ylim = c(47.35, 47.4)) +
+  geom_sf_label_repel(data = filter(SOS_sites, site %in% c("DOK")), 
+                      aes(label = site_ID), color = "black", size = 5,  
+                      nudge_y =  0.005) +
+  geom_sf(data = SOS_sites, aes(shape = IPA), color = "magenta", size = 5) +
+  coord_sf(xlim = c(-122.48, -122.42), ylim = c(47.36, 47.39)) +
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
-        panel.border = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, linewidth=1),
         axis.ticks = element_blank(),
         axis.text.x  = element_blank(),
         axis.text.y  = element_blank(),
         axis.title.x = element_blank(),
         axis.title.y = element_blank(),
-        legend.position = "none")
+        legend.position = "none",
+        plot.margin=grid::unit(c(0,0,0,0), "mm"))
 
 #edgewater
 edg <- ggplot() +
@@ -341,22 +342,22 @@ edg <- ggplot() +
 # sji_w <- sji_bbox$xmax - sji_bbox$xmin
 # sji_h <- sji_bbox$ymax - sji_bbox$ymin
 
-fam_shoreline_crop <- st_crop(shoreline_crop, ext(c(-123.02, -122.94), c(48.575, 48.64))) #crop to fam
+fam_shoreline_crop <- st_crop(shoreline, ext(c(-123.02, -122.94), c(48.575, 48.64))) #crop to fam
 fam_bbox <- st_bbox(fam_shoreline_crop)
 fam_w <- fam_bbox$xmax - fam_bbox$xmin
 fam_h <- fam_bbox$ymax - fam_bbox$ymin
 
-tur_shoreline_crop <- st_crop(shoreline_crop, ext(c(-123.03, -122.91), c(48.50, 48.56))) #crop to tur
+tur_shoreline_crop <- st_crop(shoreline, ext(c(-123.03, -122.91), c(48.50, 48.56))) #crop to tur
 tur_bbox <- st_bbox(tur_shoreline_crop)
 tur_w <- tur_bbox$xmax - tur_bbox$xmin
 tur_h <- tur_bbox$ymax - tur_bbox$ymin
 
-cor_shoreline_crop <- st_crop(shoreline_crop, ext(c(-122.675, -122.585), c(48.38, 48.425))) #crop to cornet bay
+cor_shoreline_crop <- st_crop(shoreline, ext(c(-122.675, -122.585), c(48.38, 48.425))) #crop to cornet bay
 cor_bbox <- st_bbox(cor_shoreline_crop)
 cor_w <- cor_bbox$xmax - cor_bbox$xmin
 cor_h <- cor_bbox$ymax - cor_bbox$ymin
 
-shr_shoreline_crop <- st_crop(shoreline_crop, ext(c(-122.38, -122.35), c(47.47, 47.49))) #crop to seahurst
+shr_shoreline_crop <- st_crop(shoreline, ext(c(-122.38, -122.35), c(47.47, 47.49))) #crop to seahurst
 shr_bbox <- st_bbox(shr_shoreline_crop)
 shr_w <- shr_bbox$xmax - shr_bbox$xmin
 shr_h <- shr_bbox$ymax - shr_bbox$ymin
