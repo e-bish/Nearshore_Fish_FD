@@ -152,12 +152,12 @@ feeding_guild2 <- fooditems(spp_names$Species) %>%
 
 feeding_guild <- rbind(feeding_guild1, feeding_guild2) %>% 
   add_row(Species = "Blepsias cirrhosus", feeding_guild = "Zoobenthivorous") %>% #fishbase "Diet"
-  add_row(Species = "Liparis florae", feeding_guild = "Zoobenthivorous")  %>% #don't have a great source for this one
+  add_row(Species = "Liparis florae", feeding_guild = "Zoobenthivorous")  %>% #based on Liparis pulchellus
   mutate(feeding_guild = str_to_lower(feeding_guild))
 
-#chinook are omnivorous - duffy et al. 2011
+#chinook are omnivorous - duffy et al. 2010
 #chinook and chum in eelgrass mostly eat epifaunal invertebrates - Kennedy et al. 2018
-#coho and chinook eat some fish, otherwise they (and other species) eat a combination of zoobenthos and zooplankton - Beamish et al. 2003 (A history of reserach)
+#coho and chinook eat some fish, otherwise they (and other species) eat a combination of zoobenthos and zooplankton - Beamish et al. 2003 
 
 fish_traits <- full_join(fork_length, milieu) %>% 
   select(3,1,2,4,5,6) %>% 
