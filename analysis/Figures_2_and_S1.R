@@ -1,5 +1,13 @@
+library(here)
+library(tidyverse)
+library(FD)
+library(RColorBrewer)
 
+#load abundance and trait data
+load(here("data", "fish.list.Rdata")) #last saved 3/21/25
 
+SOS_core_sites <- factor(c("FAM", "TUR", "COR", "SHR", "DOK", "EDG"), 
+                         levels = c("FAM", "TUR", "COR", "SHR", "DOK", "EDG"))
 
 #### look at traits by shoreline ####
 fish_cwm <- functcomp(x = fish.list$trait,
@@ -24,8 +32,7 @@ fish_cwm_long <- fish_cwm_df %>%
   mutate(across(where(is.character), as.factor)) %>% 
   arrange(trait_group, traits)
 
-library(RColorBrewer)
-bs_col <- brewer.pal(n = 4, "YlGnBu")
+bs_col <- brewer.pal(n = 4, "Blues")
 dp_col <- brewer.pal(n = 4, "YlGn")
 mi_col <- brewer.pal(n = 3, "Reds")
 fg_col <- brewer.pal(n = 3, "RdPu")
