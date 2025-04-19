@@ -3,6 +3,7 @@
 #load libraries
 library(tidyverse)
 library(here)
+library(janitor)
 library(rfishbase)
 library(GGally)
 
