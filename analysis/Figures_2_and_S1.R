@@ -75,3 +75,6 @@ ipa_length_plot <- length_cwm %>%
   labs(y = "CWM of mean lengths (mm)", title = "Body Size")
 
 ipa_length_plot + ipa_trait_wrap + plot_layout(ncol = 1, heights = c(0.5,1))
+
+ggsave(here("figures", "Figure_2.png"), 
+       width = 6, height = 8, dpi = 300)

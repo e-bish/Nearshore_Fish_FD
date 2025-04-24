@@ -225,6 +225,9 @@ free(p1) + guide_area() + p2 +
   theme(legend.direction = 'vertical',
         legend.box = 'horizontal')
 
+ggsave(here("figures", "figure_3.png"), 
+       width = 8, height = 6, dpi = 300) 
+
 #### summary stats ####
 
 
@@ -241,6 +244,10 @@ mFD_results %>%
              scales = "free_y") + 
   labs(x = "Condition category", y = "Value") + 
   theme(strip.background = element_rect(fill = NA, colour = NA))
+
+ggsave(here("figures", "figure_S2.png"), 
+       width = 8, height = 6, dpi = 300) 
+
 
 #### permanova and permdisp ####
 #specify the permutations
