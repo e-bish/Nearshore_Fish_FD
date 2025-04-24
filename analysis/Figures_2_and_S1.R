@@ -38,6 +38,38 @@ mi_col <- brewer.pal(n = 3, "Reds")
 fg_col <- brewer.pal(n = 3, "RdPu")
 trait_cols <- c(bs_col, dp_col, mi_col, fg_col)
 
+#by site
+trait_wrap <- fish_cwm_long %>% 
+  ggplot(aes(x = site, fill = factor(traits, levels = unique(traits)))) +
+  geom_bar(stat = "count", position = "fill") + 
+  theme_classic() + 
+  scale_fill_manual(values = trait_cols) +
+  theme(strip.background = element_rect(fill = NA, colour = NA),
+        strip.text.x = element_text(size = 10)) +
+  facet_wrap(~factor(trait_group, 
+                     labels = c("Body Shape",
+                                "Water Column Position",
+                                "Feeding Guild",
+                                "Migrations"))) +
+  labs(fill = "Traits", y = "Proportion of sampling points where dominant", x = "Site")
+
+length_cwm <- fish_cwm_df %>% 
+  select(!body_shape_i:feeding_guild)
+
+length_plot <- length_cwm %>% 
+  ggplot(aes(x = site, y = mean_length_mm)) +
+  geom_boxplot() + 
+  geom_point(alpha = 0.4) +
+  theme_classic() + 
+  theme(axis.title.x = element_blank(),
+        plot.title = element_text(hjust = 0.5, size = 10)) +
+  labs(y = "CWM of mean lengths (mm)", title = "Body Size")
+
+length_plot + trait_wrap + plot_layout(ncol = 1, heights = c(0.5,1))
+
+ggsave(here("figures", "Figure_2.png"), 
+       width = 6, height = 8, dpi = 300)
+
 #by ipa
 fish_cwm_long %>% 
   ggplot(aes(x = ipa, fill = factor(traits, levels = unique(traits)))) +
@@ -76,5 +108,5 @@ ipa_length_plot <- length_cwm %>%
 
 ipa_length_plot + ipa_trait_wrap + plot_layout(ncol = 1, heights = c(0.5,1))
 
-ggsave(here("figures", "Figure_2.png"), 
+ggsave(here("figures", "Figure_S1.png"), 
        width = 6, height = 8, dpi = 300)
