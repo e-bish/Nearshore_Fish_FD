@@ -71,7 +71,7 @@ metrics_clean <- c("Species Richness", "FDis", "FEve", "FRic", "FDiv")
 
 colnames(mFD_values)[1:5] <- metrics
 
-# load(here("data", "rows_w_few_spp_season.Rdata"))
+load(here("data", "rows_w_few_spp_month.Rdata"))
 
 add_small_samples_back <- rows_w_few_spp %>% 
   rownames_to_column(var = "sample") %>% 
@@ -276,7 +276,7 @@ split_plot_shuffle <- how(within = Within(type = "free"),
 # check(mFD_results, control =split_plot_shuffle)
 # head(mFD_results[shuffle(nrow(mFD_results), control = split_plot_shuffle), c("site", "ipa", "year")], 15)
 
-FD_dist <- vegdist(mFD_results[,c("FDis", "FEve", "FRic", "FDiv")], method = "euc")x
+FD_dist <- vegdist(mFD_results[,c("FDis", "FEve", "FRic", "FDiv")], method = "euc")
 
 adonis2(FD_dist ~ ipa*site*month, data = mFD_results, permutations = split_plot_shuffle, by = "margin")
 #not significant
@@ -380,7 +380,7 @@ plot_prep %>%
 
 
 plot_prep %>% 
-  ggplot(aes(x = month, y = value, color = site)) + 
+  ggplot(aes(x = month, y = avg, color = site)) + 
   geom_point() + 
   theme_classic() + 
   facet_wrap(~metric, scales = "free_y")

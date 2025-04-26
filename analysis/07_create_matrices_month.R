@@ -60,7 +60,7 @@ rows_w_few_spp <- fish_L_sample %>%
   decostand(method = "pa") %>%
   filter(rowSums(.) < 4)
 
-# save(rows_w_few_spp, file = here("data", "rows_w_few_spp_season.Rdata"))
+save(rows_w_few_spp, file = here("data", "rows_w_few_spp_month.Rdata"))
 
 samples_w_few_spp <- rownames(rows_w_few_spp)
 
