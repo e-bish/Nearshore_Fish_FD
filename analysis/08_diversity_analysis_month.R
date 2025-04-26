@@ -378,3 +378,9 @@ plot_prep %>%
   theme_classic() + 
   facet_wrap(~metric, scales = "free_y")
 
+
+plot_prep %>% 
+  ggplot(aes(x = month, y = value, color = site)) + 
+  geom_point() + 
+  theme_classic() + 
+  facet_wrap(~metric, scales = "free_y")
