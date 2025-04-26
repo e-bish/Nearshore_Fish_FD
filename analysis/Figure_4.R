@@ -1,4 +1,9 @@
+#load libraries
+library(tidyverse)
+library(here)
 
+load(here("data","mFD_results.Rdata"))
+load(here("data", "fish_L_sample.Rdata")) 
 
 #### Plot the assemblages weighted by abundance (do sites have more generalists - points in the middle of the trait space?)
 spp_weights <- fish_L_sample %>% 

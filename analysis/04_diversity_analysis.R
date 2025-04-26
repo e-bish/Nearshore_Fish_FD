@@ -92,7 +92,7 @@ mFD_results <- mFD_values %>%
          across(where(is.numeric), ~replace_na(., 0))) %>% 
   mutate(ipa = ifelse(ipa == "Natural2", "Natural", ipa)) 
 
-save(mFD_results, file = here("data","mFD_results.Rdata")) #last saved 3/21/25
+# save(mFD_results, file = here("data","mFD_results.Rdata")) #last saved 3/21/25
 load(here("data","mFD_results.Rdata"))
 
 #plot with full range
