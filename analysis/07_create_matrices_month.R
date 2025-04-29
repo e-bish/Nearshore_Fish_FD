@@ -23,7 +23,7 @@ sampling_events <- net_core %>%
   filter(!(site == "COR" & year == "2019" & month == "May" & day == "01")) %>% 
   filter(!(site == "TUR" & year == "2018" & month == "Jul" & day == "11")) %>%  #this is an incomplete sampling event. Complete sampling at TUR occured on 7/12/18
   filter(!(site == "TUR" & year == "2018" & month == "Sept" & day == "11")) %>% #another month with repeat sampling; keeping only the second september TUR sampling event
-  group_by(year, site, ipa) %>% 
+  group_by(year, month, site, ipa) %>% 
   summarize(no_net_sets = n()) %>% 
   ungroup()
 
@@ -100,4 +100,4 @@ fish.list.month <- list("trait" = fish_Q,
                   "abund" = fish_L,
                   "meta" = fish_meta) 
 
-save(fish.list.month, file = here("data", "fish.list.month.Rdata")) #last saved 04/19/25
+save(fish.list.month, file = here("data", "fish.list.month.Rdata")) #last saved 04/29/25
