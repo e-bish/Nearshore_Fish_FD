@@ -11,7 +11,7 @@ library(FD)
 
 #### Start here for FD analysis ####
 
-load(here("data", "fish.list.season.Rdata"))
+load(here("data", "fish.list.season1.Rdata"))
 
 fish.list <- fish.list.season
 
@@ -47,7 +47,7 @@ trait_space <- space_quality$"details_fspaces"$"sp_pc_coord"
 #test correlations between traits and axes
 traits_correlations <- traits.faxes.cor(
   sp_tr          = fish.list$trait, 
-  sp_faxes_coord = trait_space[ , c("PC1", "PC2", "PC3", "PC4")], 
+  sp_faxes_coord = trait_space[ , c("PC1", "PC2", "PC3")], 
   plot           = TRUE)
 
 traits_correlations$"tr_faxes_stat"[which(traits_correlations$"tr_faxes_stat"$"p.value" < 0.05), ]
@@ -71,7 +71,7 @@ metrics_clean <- c("Species Richness", "FDis", "FEve", "FRic", "FDiv")
 
 colnames(mFD_values)[1:5] <- metrics
 
-load(here("data", "rows_w_few_spp_season.Rdata"))
+load(here("data", "rows_w_few_spp_season1.Rdata"))
 
 add_small_samples_back <- rows_w_few_spp %>% 
   rownames_to_column(var = "sample") %>% 
@@ -274,7 +274,10 @@ split_plot_shuffle <- how(within = Within(type = "free"),
 
 FD_dist <- vegdist(mFD_results[,c("FDis", "FEve", "FRic", "FDiv")], method = "euc")
 
-adonis2(FD_dist ~ ipa + site + season, data = mFD_results, permutations = split_plot_shuffle, by = "margin")
+adonis2(FD_dist ~ ipa * site * season, data = mFD_results, permutations = split_plot_shuffle, by = "margin")
+
+adonis2(FD_dist ~ ipa * site * season - ipa:site:season, data = mFD_results, permutations = split_plot_shuffle, by = "margin")
+
 
 ipa.disp <- betadisper(FD_dist, mFD_results$ipa, type = c("median"), bias.adjust = FALSE,
                        sqrt.dist = FALSE, add = FALSE)
