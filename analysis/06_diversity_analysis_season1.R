@@ -11,9 +11,9 @@ library(FD)
 
 #### Start here for FD analysis ####
 
-load(here("data", "fish.list.month.Rdata"))
+load(here("data", "fish.list.season.Rdata"))
 
-fish.list <- fish.list.month
+fish.list <- fish.list.season
 
 #### run with mFD ####
 traits_cat <- data.frame(trait_name = colnames(fish.list$trait),
@@ -47,12 +47,12 @@ trait_space <- space_quality$"details_fspaces"$"sp_pc_coord"
 #test correlations between traits and axes
 traits_correlations <- traits.faxes.cor(
   sp_tr          = fish.list$trait, 
-  sp_faxes_coord = trait_space[ , c("PC1", "PC2", "PC3")], 
+  sp_faxes_coord = trait_space[ , c("PC1", "PC2", "PC3", "PC4")], 
   plot           = TRUE)
 
 traits_correlations$"tr_faxes_stat"[which(traits_correlations$"tr_faxes_stat"$"p.value" < 0.05), ]
 
-traits_correlations$"tr_faxes_plot" + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+traits_correlations$"tr_faxes_plot"
 
 #calculate FD Indices
 alpha_fd_indices <- alpha.fd.multidim(sp_faxes_coord = trait_space[ , c("PC1", "PC2", "PC3")],
@@ -71,27 +71,22 @@ metrics_clean <- c("Species Richness", "FDis", "FEve", "FRic", "FDiv")
 
 colnames(mFD_values)[1:5] <- metrics
 
-load(here("data", "rows_w_few_spp_month.Rdata"))
+load(here("data", "rows_w_few_spp_season.Rdata"))
 
 add_small_samples_back <- rows_w_few_spp %>% 
   rownames_to_column(var = "sample") %>% 
-  separate_wider_delim(sample, delim = "_", names = c("site", "ipa", "month")) %>% 
+  separate_wider_delim(sample, delim = "_", names = c("site", "ipa", "season")) %>% 
   mutate(Species_Richness = rowSums(across(where(is.numeric)))) %>% 
-  select(site, ipa, month, Species_Richness)
+  select(site, ipa, season, Species_Richness)
 
 mFD_results <- mFD_values %>%
   select(!6:8) %>% 
   as_tibble(rownames = "sample") %>% 
-  separate_wider_delim(sample, delim = "_", names = c("site", "ipa", "month"), cols_remove = TRUE) %>% 
+  separate_wider_delim(sample, delim = "_", names = c("site", "ipa", "season"), cols_remove = TRUE) %>% 
   full_join(add_small_samples_back) %>% 
   mutate(site = factor(site, levels = c("FAM", "TUR", "COR", "SHR", "DOK", "EDG")),
          region = ifelse(site %in% c("FAM", "TUR", "COR"), "North", "South"), 
-         month = factor(month, levels = c("Apr", "May", "Jun", "Jul", "Aug", "Sept")),
-         veg = ifelse(site %in% c("TUR", "COR", "SHR"), "present", "absent"), 
-         season = ifelse(month %in% c("May", "Jun", "Jul"), "peak", "shoulder"), .after = site,
-         season1 = case_when(month %in% c("Apr", "Sept") ~ "tail",
-                             month %in% c("Jun", "Jul") ~ "peak",
-                                          TRUE ~ "shoulder"),
+         veg = ifelse(site %in% c("TUR", "COR", "SHR"), "present", "absent"), .after = site,
          shoreline = paste0(site, case_when(ipa == "Armored" ~ "A", 
                                             ipa == "Restored" ~ "R", 
                                             ipa == "Natural2" ~ "N2",
@@ -99,53 +94,43 @@ mFD_results <- mFD_values %>%
          across(where(is.numeric), ~replace_na(., 0))) %>% 
   mutate(ipa = ifelse(ipa == "Natural2", "Natural", ipa)) 
 
-
-mFD_results.month <- mFD_results
-
-save(mFD_results.month, file = here("data","mFD_results.month.Rdata")) #last saved 4/29/25
+# save(mFD_results, file = here("data","mFD_results.Rdata")) #last saved 3/21/25
 # load(here("data","mFD_results.Rdata"))
 
-### Figure 3 ###
-site_colors <- rev(c("#8c510a","#d8b365", 
-                     # "#f6e8c1",
-                     "lightgoldenrod",
-                     # "#c7eae8",
-                     "lightblue",
-                     "#5ab4ac", "#01665e"))
-
+#plot with full range
 plot_prep <- mFD_results %>%
   mutate(ipa2 = ifelse(shoreline == "TURN2", "alt", "no_alt")) %>% 
   group_by(site, ipa, ipa2) %>% 
   mutate(id = factor(cur_group_id())) %>%
   ungroup() %>% 
-  pivot_longer(!c(shoreline, site, ipa, ipa2, month, season, season1, region, veg, id), 
+  pivot_longer(!c(shoreline, site, ipa, ipa2, season, region, veg, id), 
                names_to = "metric", values_to = "value") %>%
   group_by(id, metric) %>% 
   mutate(min = min(value), max = max(value)) %>% 
-  ungroup()  
+  ungroup() 
 
 
 p1 <- plot_prep %>% 
   filter(metric == "Species_Richness") %>% 
-  ggplot(aes(x = id, y = value)) +
-  geom_boxplot(aes(fill = site)) +
-  geom_point(aes(shape = ipa), size = 2, alpha = 0.5) +
+  ggplot(aes(x = id, y = value, color = site, shape = ipa), show.legend = TRUE) +
+  geom_point(size = 3, alpha = 0.5) +
+  geom_linerange(aes(ymin=min,ymax=max),linetype=1, show.legend = FALSE)+
   theme_classic() +
   theme(axis.text.x = element_blank(),
         axis.title.x=element_blank(),
+        # axis.text.x = element_text(angle = 60, vjust = 0.75, hjust=1),
         legend.box = "horizontal", 
         legend.title = element_text(hjust = 0.5),
         plot.title = element_text(hjust = 0.5, size = 10)) +
-  scale_fill_manual(values = site_colors) +
-  scale_alpha_manual(values = c(1, 0.6, 0.3)) +
   labs(title = "Species Richness", 
-       y = "Value", fill = "Site", shape = "Shoreline\ncondition") 
+       # x = "Shoreline ID", 
+       y = "Value", color = "Site", shape = "Shoreline\ntype") 
 
 p2 <- plot_prep %>% 
   filter(!metric == "Species_Richness") %>% 
-  ggplot(aes(x = id, y = value)) +
-  geom_boxplot(aes(fill = site)) +
-  geom_point(aes(shape = ipa), size = 2, alpha = 0.5) +
+  ggplot(aes(x = id, y = value, color = site, shape = ipa), show.legend = TRUE) +
+  geom_point(size = 3, alpha = 0.5) +
+  geom_linerange(aes(ymin=min,ymax=max),linetype=1, show.legend = FALSE)+
   theme_classic() +
   theme(axis.text.x = element_text(angle = 60, vjust = 0.75, hjust=1),
         legend.box = "horizontal", 
@@ -154,8 +139,7 @@ p2 <- plot_prep %>%
         strip.text.x = element_text(size = 10),
         strip.background = element_rect(fill = NA,
                                         colour = NA)) +
-  scale_fill_manual(values = site_colors) +
-  labs(x = "Shoreline ID", y = "Value", fill = "Site", shape = "Shoreline\ncondition") +
+  labs(x = "Shoreline ID", y = "Value", color = "Site", shape = "Shoreline\ntype") +
   facet_wrap(~factor(metric, levels = c("FDis", "FRic", "FEve", "FDiv")), 
              scales = "free_y", axes = "all_x", axis.labels = "margins")
 
@@ -172,54 +156,76 @@ free(p1) + guide_area() + p2 +
         legend.box = 'horizontal')
 
 #### Figure 3 ###
+# plot with means
+mFD_averages <- mFD_results %>% 
+  pivot_longer(!c(shoreline, site, ipa, season, region, veg), names_to = "metric", values_to = "value") %>% 
+  group_by(site, ipa, shoreline, metric) %>% 
+  summarize(mean = mean(value), sd = sd(value), max = max(value), min = min(value))
 
+plot_prep <- mFD_results %>%
+  mutate(ipa2 = ifelse(shoreline == "TURN2", "alt", "no_alt")) %>% 
+  group_by(site, ipa, ipa2) %>% 
+  mutate(id = factor(cur_group_id())) %>%
+  ungroup() %>% 
+  pivot_longer(!c(shoreline, site, ipa, ipa2, season, region, veg, id), 
+               names_to = "metric", values_to = "value") %>%
+  group_by(site, ipa, id, metric) %>% 
+  summarize(avg = mean(value), min = min(value), max = max(value)) %>% 
+  ungroup() 
 
-# p1 <- plot_prep %>% 
-#   filter(metric == "Species_Richness") %>% 
-#   ggplot(aes(x = id, y = avg, color = site, alpha = ipa), show.legend = TRUE) +
-#   geom_point(size = 3) +
-#   geom_linerange(aes(ymin=min,ymax=max),linetype=1, show.legend = FALSE)+
-#   theme_classic() +
-#   theme(axis.text.x = element_blank(),
-#         axis.title.x=element_blank(),
-#         # axis.text.x = element_text(angle = 60, vjust = 0.75, hjust=1),
-#         legend.box = "horizontal", 
-#         legend.title = element_text(hjust = 0.5),
-#         plot.title = element_text(hjust = 0.5, size = 10)) +
-#   scale_color_manual(values = site_colors) +
-#   labs(title = "Species Richness", 
-#        # x = "Shoreline ID", 
-#        y = "Value", color = "Site", shape = "Shoreline\ntype") 
-# 
-# p2 <- plot_prep %>% 
-#   filter(!metric == "Species_Richness") %>% 
-#   ggplot(aes(x = id, y = avg, color = site, shape = ipa), show.legend = TRUE) +
-#   geom_point(size = 3) +
-#   geom_linerange(aes(ymin=min,ymax=max),linetype=1, show.legend = FALSE)+
-#   theme_classic() +
-#   theme(axis.text.x = element_text(angle = 60, vjust = 0.75, hjust=1),
-#         legend.box = "horizontal", 
-#         legend.title = element_text(hjust = 0.5),
-#         strip.placement = "outside",
-#         strip.text.x = element_text(size = 10),
-#         strip.background = element_rect(fill = NA,
-#                                         colour = NA)) +
-#   scale_color_manual(values = site_colors) +
-#   labs(x = "Shoreline ID", y = "Value", color = "Site", shape = "Shoreline\ntype") +
-#   facet_wrap(~factor(metric, levels = c("FDis", "FRic", "FEve", "FDiv")), 
-#              scales = "free_y", axes = "all_x", axis.labels = "margins")
-# 
-# layout <- '
-# AB
-# CC
-# '
-# 
-#  free(p1) + guide_area() + p2 + 
-#   plot_layout(guides = 'collect', 
-#               design = layout,
-#               heights = c(1.1,2)) &
-#   theme(legend.direction = 'vertical',
-#         legend.box = 'horizontal')
+site_colors <- rev(c("#8c510a","#d8b365", 
+                     # "#f6e8c1",
+                     "lightgoldenrod",
+                     # "#c7eae8",
+                     "lightblue",
+                     "#5ab4ac", "#01665e"))
+
+p1 <- plot_prep %>% 
+  filter(metric == "Species_Richness") %>% 
+  ggplot(aes(x = id, y = avg, color = site, shape = ipa), show.legend = TRUE) +
+  geom_point(size = 3) +
+  geom_linerange(aes(ymin=min,ymax=max),linetype=1, show.legend = FALSE)+
+  theme_classic() +
+  theme(axis.text.x = element_blank(),
+        axis.title.x=element_blank(),
+        # axis.text.x = element_text(angle = 60, vjust = 0.75, hjust=1),
+        legend.box = "horizontal", 
+        legend.title = element_text(hjust = 0.5),
+        plot.title = element_text(hjust = 0.5, size = 10)) +
+  scale_color_manual(values = site_colors) +
+  labs(title = "Species Richness", 
+       # x = "Shoreline ID", 
+       y = "Value", color = "Site", shape = "Shoreline\ntype") 
+
+p2 <- plot_prep %>% 
+  filter(!metric == "Species_Richness") %>% 
+  ggplot(aes(x = id, y = avg, color = site, shape = ipa), show.legend = TRUE) +
+  geom_point(size = 3) +
+  geom_linerange(aes(ymin=min,ymax=max),linetype=1, show.legend = FALSE)+
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 60, vjust = 0.75, hjust=1),
+        legend.box = "horizontal", 
+        legend.title = element_text(hjust = 0.5),
+        strip.placement = "outside",
+        strip.text.x = element_text(size = 10),
+        strip.background = element_rect(fill = NA,
+                                        colour = NA)) +
+  scale_color_manual(values = site_colors) +
+  labs(x = "Shoreline ID", y = "Value", color = "Site", shape = "Shoreline\ntype") +
+  facet_wrap(~factor(metric, levels = c("FDis", "FRic", "FEve", "FDiv")), 
+             scales = "free_y", axes = "all_x", axis.labels = "margins")
+
+layout <- '
+AB
+CC
+'
+
+free(p1) + guide_area() + p2 + 
+  plot_layout(guides = 'collect', 
+              design = layout,
+              heights = c(1.1,2)) &
+  theme(legend.direction = 'vertical',
+        legend.box = 'horizontal')
 
 #### summary stats ####
 
@@ -227,7 +233,7 @@ free(p1) + guide_area() + p2 +
 ######################
 #### figure S2 ####
 mFD_results %>% 
-  pivot_longer(!c(site, ipa, month, season, season1, shoreline, region, veg), names_to = "metric", values_to = "value") %>% 
+  pivot_longer(!c(site, ipa, season, shoreline, region, veg), names_to = "metric", values_to = "value") %>% 
   ggplot(aes(x = ipa, y = value)) +
   geom_boxplot() +
   geom_point(show.legend = FALSE) +
@@ -238,29 +244,17 @@ mFD_results %>%
   labs(x = "Condition category", y = "Value") + 
   theme(strip.background = element_rect(fill = NA, colour = NA))
 
-#month
+#season
 mFD_results %>% 
-  pivot_longer(!c(site, ipa, month, shoreline, season, season1, region, veg), names_to = "metric", values_to = "value") %>% 
-  ggplot(aes(x = month, y = value)) +
+  pivot_longer(!c(site, ipa, season, shoreline, region, veg), names_to = "metric", values_to = "value") %>% 
+  ggplot(aes(x = season, y = value)) +
   geom_boxplot() +
   geom_point(show.legend = FALSE) +
   theme_classic() +
   facet_wrap(~factor(metric, levels = c("Species_Richness", "FDis", "FRic", "FEve", "FDiv"),
                      labels = c("Species Richness", "FDis", "FRic", "FEve", "FDiv")),
              scales = "free_y") + 
-  labs(x = "Month", y = "Value") + 
-  theme(strip.background = element_rect(fill = NA, colour = NA))
-
-mFD_results %>% 
-  pivot_longer(!c(site, ipa, month, shoreline, season, season1, region, veg), names_to = "metric", values_to = "value") %>% 
-  ggplot(aes(x = site, y = value)) +
-  geom_boxplot() +
-  geom_point(show.legend = FALSE) +
-  theme_classic() +
-  facet_wrap(~factor(metric, levels = c("Species_Richness", "FDis", "FRic", "FEve", "FDiv"),
-                     labels = c("Species Richness", "FDis", "FRic", "FEve", "FDiv")),
-             scales = "free_y") + 
-  labs(x = "Month", y = "Value") + 
+  labs(x = "Condition category", y = "Value") + 
   theme(strip.background = element_rect(fill = NA, colour = NA))
 
 #### permanova and permdisp ####
@@ -280,28 +274,20 @@ split_plot_shuffle <- how(within = Within(type = "free"),
 
 FD_dist <- vegdist(mFD_results[,c("FDis", "FEve", "FRic", "FDiv")], method = "euc")
 
-adonis2(FD_dist ~ ipa*site*month, data = mFD_results, permutations = split_plot_shuffle, by = "margin")
-#not significant
-
-adonis2(FD_dist ~ ipa*site*month - ipa:site:month, data = mFD_results, permutations = split_plot_shuffle, by = "margin")
-#no ipa differences, but some potential differences between site and month
-
-adonis2(FD_dist ~ ipa+site+month, data = mFD_results, permutations = split_plot_shuffle, by = "margin")
-#confirmed no ipa differences
+adonis2(FD_dist ~ ipa + site + season, data = mFD_results, permutations = split_plot_shuffle, by = "margin")
 
 ipa.disp <- betadisper(FD_dist, mFD_results$ipa, type = c("median"), bias.adjust = FALSE,
                        sqrt.dist = FALSE, add = FALSE)
 
 boxplot(ipa.disp)
 permutest(ipa.disp, pairwise = TRUE)
-#no difference in dispersion between ipas
 
 #check to see if sites are different 
 
 #specify the permutations
 whole_plot_shuffle <- how(within = Within(type = "none"),
                           plots = Plots(strata = mFD_results$site, type = "free"),
-                          nperm = 720, #max
+                          nperm = 999, #max is 720 for our sample size
                           observed = TRUE)
 
 #check permutation structure
@@ -309,33 +295,22 @@ whole_plot_shuffle <- how(within = Within(type = "none"),
 # check(mFD_results, control =whole_plot_shuffle)
 # head(mFD_results[shuffle(nrow(mFD_results), control = whole_plot_shuffle), c("site", "ipa", "year")], 15)
 
-adonis2(FD_dist ~ site * month, #including site and month so we can parse out that variance
+adonis2(FD_dist ~ site + season, #including site and season so we can parse out that variance
         data = mFD_results, permutations = whole_plot_shuffle, by = "margin")
 #another, less conservative, approach would be to do unrestricted permutations at this stage because there wasn't a significant difference in 
 #ipas. This approach is suggested in Anderson and Braak, 2003. It is, however, debated whether this is an appropriate approach
 #and the documentation for PRIMER-E suggests that discarding an aspect of your study design is something to think twice about because it 
 #may not be wise to assume there aren't differences just because you didn't find them. 
 
-#again we see a significant interaction between site and month
-
-#### NOT TOTALLY SURE ABOUT THIS CODE YET ####
-library(pairwiseAdonis)
-pairwise.adonis2(FD_dist ~ month, nperm = 9999, data = mFD_results)
-#june is different from every other month
-pairwise.adonis2(FD_dist ~ site, nperm = 9999, data = mFD_results)
-#cornet is different from any other site
-
-?pairwise.adonis2
-
-####
 
 site.disp <- betadisper(FD_dist, mFD_results$site, type = c("median"), bias.adjust = FALSE,
                         sqrt.dist = FALSE, add = FALSE)
 
 boxplot(site.disp)
 permutest(site.disp, pairwise = TRUE)
+#southern sites have significantly higher dispersion
 
-#there's more variability in the southern region between sites than there is in northern regions
+#there's more variability in the southern region between seasons than there is in northern regions
 
 #playing around with ordinations
 nmds <- metaMDS(mFD_results[8:11], distance = "euc", 
@@ -355,7 +330,7 @@ nmds_points <- bind_cols(mFD_results[1:6], nmds_points)
 
 ggplot(data=nmds_points,
        aes(x=MDS1, y=MDS2,
-           color= month)) + 
+           color= site)) + 
   geom_point(size = 3) +
   # stat_ellipse(aes(group = depth, color = depth), 
   #              linetype = "dashed", show.legend = FALSE) +
@@ -371,90 +346,3 @@ ggplot(data=nmds_points,
   # annotate("text", x = -1.2, y = 1.4, 
   #          label = paste("Stress = ", round(nonmotile.nmds$stress, 3))) +
   theme(text = element_text(size = 14))
-
-#just june and september, to compare
-plot_prep %>% 
-  filter(month %in% c("Jun", "Sept")) %>% 
-  ggplot(aes(x = site, y = value, fill = month)) + 
-  geom_boxplot() +
-  theme_classic() + 
-  facet_wrap(~metric, scales = "free_y")
-
-#by season
-plot_prep %>% 
-  ggplot(aes(x = site, y = value, fill = season)) + 
-  geom_boxplot() +
-  theme_classic() + 
-  facet_wrap(~metric, scales = "free_y")
-
-#filter out zeros
-plot_prep %>% 
-  filter(!value == 0) %>% 
-  ggplot(aes(x = site, y = value, fill = season)) + 
-  geom_boxplot() +
-  theme_classic() + 
-  facet_wrap(~metric, scales = "free_y")
-
-#by season and region
-plot_prep %>% 
-  # filter(!value == 0) %>% 
-  ggplot(aes(x = region, y = value, fill = season)) + 
-  geom_boxplot() +
-  theme_classic() + 
-  facet_wrap(~metric, scales = "free_y")
-
-
-#### Figure 3 by region ####
-p1 <- plot_prep %>% 
-  filter(metric == "Species_Richness") %>% 
-  ggplot(aes(x = month, y = value, fill = region)) +
-  geom_boxplot() +
-  # geom_point(aes(shape = ipa), size = 2, alpha = 0.5) +
-  theme_classic() +
-  theme(axis.text.x = element_blank(),
-        axis.title.x=element_blank(),
-        legend.box = "horizontal", 
-        legend.title = element_text(hjust = 0.5),
-        plot.title = element_text(hjust = 0.5, size = 10)) +
-  scale_fill_manual(values = site_colors) +
-  scale_alpha_manual(values = c(1, 0.6, 0.3)) +
-  labs(title = "Species Richness", 
-       y = "Value", fill = "Region") 
-
-p2 <- plot_prep %>% 
-  filter(!metric == "Species_Richness") %>% 
-  ggplot(aes(x = month, y = value, fill = region)) +
-  geom_boxplot() +
-  theme_classic() +
-  theme(axis.text.x = element_text(angle = 60, vjust = 0.75, hjust=1),
-        legend.box = "horizontal", 
-        legend.title = element_text(hjust = 0.5),
-        strip.placement = "outside",
-        strip.text.x = element_text(size = 10),
-        strip.background = element_rect(fill = NA,
-                                        colour = NA)) +
-  scale_fill_manual(values = site_colors) +
-  labs(x = "Shoreline ID", y = "Value", fill = "Region") +
-  facet_wrap(~factor(metric, levels = c("FDis", "FRic", "FEve", "FDiv")), 
-             scales = "free_y", axes = "all_x", axis.labels = "margins")
-
-free(p1) + guide_area() + p2 + 
-  plot_layout(guides = 'collect', 
-              design = layout,
-              heights = c(1.1,2)) &
-  theme(legend.direction = 'vertical',
-        legend.box = 'horizontal')
-
-plot_prep %>% 
-  ggplot(aes(x = month, y = value, color = site, shape = ipa)) + 
-  geom_point() + 
-  theme_classic() + 
-  facet_wrap(~metric, scales = "free_y")
-
-
-#SR v FR
-
-mFD_values %>% 
-  ggplot(aes(x = Species_Richness, y = FRic)) +
-  geom_point() + 
-  theme_classic()
