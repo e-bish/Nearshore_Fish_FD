@@ -4,6 +4,7 @@
 library(tidyverse)
 library(here)
 library(janitor)
+library(vegan)
 library(rfishbase)
 library(GGally)
 
