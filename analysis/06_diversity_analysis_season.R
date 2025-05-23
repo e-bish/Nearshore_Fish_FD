@@ -17,7 +17,7 @@ fish.list <- fish.list.season
 
 #### run with mFD ####
 traits_cat <- data.frame(trait_name = colnames(fish.list$trait),
-                         trait_type = c("Q", "N", "N", "N", "N"))
+                         trait_type = c("Q", "N", "N", "N"))
 
 #Species trait summary
 traits_summary <- sp.tr.summary(tr_cat = traits_cat, 
@@ -94,8 +94,8 @@ mFD_results <- mFD_values %>%
          across(where(is.numeric), ~replace_na(., 0))) %>% 
   mutate(ipa = ifelse(ipa == "Natural2", "Natural", ipa)) 
 
-# save(mFD_results, file = here("data","mFD_results.Rdata")) #last saved 3/21/25
-# load(here("data","mFD_results.Rdata"))
+# save(mFD_results, file = here("data","mFD_results_season.Rdata")) #last saved 5/23/25
+load(here("data","mFD_results_season.Rdata"))
 
 #plot with full range
 plot_prep <- mFD_results %>%
@@ -257,92 +257,4 @@ mFD_results %>%
   labs(x = "Condition category", y = "Value") + 
   theme(strip.background = element_rect(fill = NA, colour = NA))
 
-#### permanova and permdisp ####
-#specify the permutations
-#in permutation terminology sites are PLOTS and shorelines are SAMPLES
-#so to compare sites, we want only whole plots randomized. To compare shorelines, we want only split plots randomized
-#specify the permutations
-split_plot_shuffle <- how(within = Within(type = "free"),
-                          plots = Plots(strata = mFD_results$site, type = "none"),
-                          nperm = 9999, 
-                          observed = TRUE)
-
-#check permutation structure
-# head(mFD_results[, c("site", "ipa", "year")], 15)
-# check(mFD_results, control =split_plot_shuffle)
-# head(mFD_results[shuffle(nrow(mFD_results), control = split_plot_shuffle), c("site", "ipa", "year")], 15)
-
-FD_dist <- vegdist(mFD_results[,c("FDis", "FEve", "FRic", "FDiv")], method = "euc")
-
-adonis2(FD_dist ~ ipa + site + season, data = mFD_results, permutations = split_plot_shuffle, by = "margin")
-
-ipa.disp <- betadisper(FD_dist, mFD_results$ipa, type = c("median"), bias.adjust = FALSE,
-                       sqrt.dist = FALSE, add = FALSE)
-
-boxplot(ipa.disp)
-permutest(ipa.disp, pairwise = TRUE)
-
-#check to see if sites are different 
-
-#specify the permutations
-whole_plot_shuffle <- how(within = Within(type = "none"),
-                          plots = Plots(strata = mFD_results$site, type = "free"),
-                          nperm = 999, #max is 720 for our sample size
-                          observed = TRUE)
-
-#check permutation structure
-# head(mFD_results[, c("site", "ipa", "year")], 15)
-# check(mFD_results, control =whole_plot_shuffle)
-# head(mFD_results[shuffle(nrow(mFD_results), control = whole_plot_shuffle), c("site", "ipa", "year")], 15)
-
-adonis2(FD_dist ~ site + season, #including site and season so we can parse out that variance
-        data = mFD_results, permutations = whole_plot_shuffle, by = "margin")
-#another, less conservative, approach would be to do unrestricted permutations at this stage because there wasn't a significant difference in 
-#ipas. This approach is suggested in Anderson and Braak, 2003. It is, however, debated whether this is an appropriate approach
-#and the documentation for PRIMER-E suggests that discarding an aspect of your study design is something to think twice about because it 
-#may not be wise to assume there aren't differences just because you didn't find them. 
-
-
-site.disp <- betadisper(FD_dist, mFD_results$site, type = c("median"), bias.adjust = FALSE,
-                        sqrt.dist = FALSE, add = FALSE)
-
-boxplot(site.disp)
-permutest(site.disp, pairwise = TRUE)
-#southern sites have significantly higher dispersion
-
-#there's more variability in the southern region between seasons than there is in northern regions
-
-#playing around with ordinations
-nmds <- metaMDS(mFD_results[8:11], distance = "euc", 
-                                  autotransform = FALSE,
-                                  engine = "monoMDS",
-                                  k = 3,
-                                  weakties = TRUE,
-                                  model = "global",
-                                  maxit = 400,
-                                  try = 40,
-                                  trymax = 100, 
-                                  trace = FALSE)
-plot(nmds)
-
-nmds_points <- data.frame(nmds$points)
-nmds_points <- bind_cols(mFD_results[1:6], nmds_points) 
-
-ggplot(data=nmds_points,
-       aes(x=MDS1, y=MDS2,
-           color= site)) + 
-  geom_point(size = 3) +
-  # stat_ellipse(aes(group = depth, color = depth), 
-  #              linetype = "dashed", show.legend = FALSE) +
-  theme(axis.line = element_blank(), 
-        axis.ticks = element_blank(),
-        axis.text =  element_blank()) +
-  theme_classic() +
-  # labs(fill = "Site", shape = "Year") + 
-  # scale_shape_manual(values = c(21,24,22)) +
-  # scale_fill_manual(values = depth_colors) + 
-  # scale_color_manual(values = depth_colors) +
-  # guides(fill=guide_legend(override.aes=list(color=c(depth_colors)))) +
-  # annotate("text", x = -1.2, y = 1.4, 
-  #          label = paste("Stress = ", round(nonmotile.nmds$stress, 3))) +
-  theme(text = element_text(size = 14))
+#### permanova ####

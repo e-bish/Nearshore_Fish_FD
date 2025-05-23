@@ -1,5 +1,7 @@
 ## Create Matrices 
 
+## Create Matrices 
+
 #load libraries
 library(tidyverse)
 library(here)
@@ -10,8 +12,61 @@ library(GGally)
 #load tidy fish data 
 load(here("data", "net_core.Rdata")) 
 
+net_core %>% 
+  # group_by(month, year, tax_group) %>% 
+  # summarize(sample_catch = sum(species_count)) %>% 
+  # ungroup() %>% 
+  group_by(year, month, tax_group) %>% 
+  summarize(avg_catch = mean(species_count)) %>% 
+  ungroup() %>% 
+  # filter(!(tax_group == "Salmon" & year == 2022)) %>% 
+  ggplot(aes(x = month, y = log(avg_catch), group = tax_group, color = tax_group)) +
+  geom_line() + 
+  geom_point() +
+  theme_classic() + 
+  facet_wrap(~year)
+#salmon peak in april or may then decrease through the season
+#forage fish peak in Jun/Jul
+
+net_core %>% 
+  # group_by(month, year, tax_group) %>% 
+  # summarize(sample_catch = sum(species_count)) %>% 
+  # ungroup() %>% 
+  filter(tax_group %in% c("Salmon")) %>% 
+  # filter(!site %in% c("FAM", "TUR", "COR")) %>% 
+  mutate(region = ifelse(site %in% c("FAM", "TUR", "COR"), "north", "south")) %>% 
+  group_by(date, year, region, tax_group) %>% 
+  summarize(avg_catch = mean(species_count)) %>%
+  ungroup() %>%
+  # filter(!(tax_group == "Salmon" & year == 2022)) %>% 
+  ggplot(aes(x = date, y = log(avg_catch), color = region)) +
+  geom_line() + 
+  geom_point() +
+  theme_classic() + 
+  facet_wrap(~year, scales = "free_x")
+
+net_core %>% 
+  # group_by(month, year, tax_group) %>% 
+  # summarize(sample_catch = sum(species_count)) %>% 
+  # ungroup() %>% 
+  filter(tax_group %in% c("Forage Fish")) %>% 
+  # filter(!site %in% c("FAM", "TUR", "COR")) %>% 
+  mutate(region = ifelse(site %in% c("FAM", "TUR", "COR"), "north", "south")) %>% 
+  group_by(date, year, region, tax_group) %>% 
+  summarize(avg_catch = mean(species_count)) %>%
+  ungroup() %>%
+  # filter(!(tax_group == "Salmon" & year == 2022)) %>% 
+  ggplot(aes(x = date, y = log(avg_catch), color = region)) +
+  geom_line() + 
+  geom_point() +
+  theme_classic() + 
+  facet_wrap(~year, scales = "free_x")
+
+
 net_core <- net_core %>% 
-  mutate(season = ifelse(month %in% c("May", "Jun", "Jul"), "peak", "shoulder"), .after = day)
+  mutate(season = case_when(month %in% c("Apr", "May") ~ "Apr-May",
+                            month %in% c("Jun", "Jul") ~ "Jun-Jul",
+                            TRUE ~ "Aug-Sept"), .after = day)
 
 ## create the abundance matrix 
 # extract unique sampling events to quantify sample effort (slightly unbalanced between depths and shorelines)
@@ -32,7 +87,7 @@ expand_species <- net_core %>%
   filter(!is.na(ComName))
 
 #version with catch per set by year
-fish_L_full <- net_core %>% #L is referring to the RLQ analysis
+fish_L_partial <- net_core %>% #L is referring to the RLQ analysis
   filter(!is.na(ComName)) %>% 
   group_by(year, month, season, site, ipa, ComName) %>% 
   summarize(spp_sum = sum(species_count)) %>% #sum across depth stations within each shoreline type
@@ -43,7 +98,9 @@ fish_L_full <- net_core %>% #L is referring to the RLQ analysis
   full_join(expand_species) %>% #add back in all of the events so we can capture 0s
   mutate(ComName = replace(ComName, ComName == "Pacific Sandfish", "Pacific sandfish")) %>% #if it's capitolized it gets confused about the proper order
   arrange(year, month, site, ipa, ComName) %>% 
-  mutate(catch_per_set  = replace_na(catch_per_set , 0)) %>% 
+  mutate(catch_per_set  = replace_na(catch_per_set , 0))
+
+fish_L_full <- fish_L_partial %>% 
   group_by(season, site, ipa, ComName) %>% 
   summarize(avg_cps = mean(catch_per_set)) %>% #average across months and years within a season for each ipa
   pivot_wider(names_from = ComName, values_from = avg_cps, values_fill = 0) %>% 
@@ -58,8 +115,9 @@ fish_L_sample <- fish_L_full %>%
 rows_w_few_spp <- fish_L_sample %>%
   decostand(method = "pa") %>%
   filter(rowSums(.) < 4)
+#5 observations for <4, 9 observations for <5
 
-# save(rows_w_few_spp, file = here("data", "rows_w_few_spp_season.Rdata"))
+# save(rows_w_few_spp, file = here("data", "rows_w_few_spp_season1.Rdata"))
 
 samples_w_few_spp <- rownames(rows_w_few_spp)
 
@@ -85,6 +143,7 @@ fish_meta <- fish_L_sample %>%
   separate_wider_delim(sample, delim = "_", names = c("site", "ipa", "season"), cols_remove = TRUE) %>% 
   mutate(site = factor(site, levels = c("FAM", "TUR", "COR", "SHR", "DOK", "EDG")),
          region = ifelse(site %in% c("FAM", "TUR", "COR"), "North", "South"), 
+         season = factor(season, levels = c("Apr-May", "Jun-Jul", "Aug-Sept")),
          veg = ifelse(site %in% c("TUR", "COR", "SHR"), "present", "absent"), .after = site,
          shoreline = paste0(site, case_when(ipa == "Armored" ~ "A", 
                                             ipa == "Restored" ~ "R", 
