@@ -11,7 +11,12 @@ library(FD)
 
 #### Start here for FD analysis ####
 
+set.seed(2025)
+
 load(here("data", "fish.list.Rdata"))
+
+# fish.list$trait <- fish.list$trait %>% 
+#   select(!migrations)
 
 #### run with mFD ####
 traits_cat <- data.frame(trait_name = colnames(fish.list$trait),
@@ -232,7 +237,22 @@ ggsave(here("figures", "figure_3.png"),
 
 
 ######################
-#### figure S2 ####
+
+#### FD by site ####
+mFD_results %>% 
+  pivot_longer(!c(site, ipa, year, shoreline, region, veg), names_to = "metric", values_to = "value") %>% 
+  ggplot(aes(x = site, y = value)) +
+  geom_boxplot() +
+  geom_point(show.legend = FALSE) +
+  theme_classic() +
+  facet_wrap(~factor(metric, levels = c("Species_Richness", "FDis", "FRic", "FEve", "FDiv"),
+                     labels = c("Species Richness", "FDis", "FRic", "FEve", "FDiv")),
+             scales = "free_y") + 
+  labs(x = "Condition category", y = "Value") + 
+  theme(strip.background = element_rect(fill = NA, colour = NA))
+
+
+#### figure S2, FD by ipa ####
 mFD_results %>% 
   pivot_longer(!c(site, ipa, year, shoreline, region, veg), names_to = "metric", values_to = "value") %>% 
   ggplot(aes(x = ipa, y = value)) +
@@ -249,54 +269,123 @@ ggsave(here("figures", "figure_S2.png"),
        width = 8, height = 6, dpi = 300) 
 
 
-#### permanova and permdisp ####
-#specify the permutations
-#in permutation terminology sites are PLOTS and shorelines are SAMPLES
-#so to compare sites, we want only whole plots randomized. To compare shorelines, we want only split plots randomized
-#specify the permutations
-split_plot_shuffle <- how(within = Within(type = "free"),
-                          plots = Plots(strata = mFD_results$site, type = "none"),
-                          nperm = 9999, 
-                          observed = TRUE)
+#### permanova ####
 
-#check permutation structure
-# head(mFD_results[, c("site", "ipa", "year")], 15)
-# check(mFD_results, control =split_plot_shuffle)
-# head(mFD_results[shuffle(nrow(mFD_results), control = split_plot_shuffle), c("site", "ipa", "year")], 15)
+adonis2(mFD_results[8:11] ~ ipa*site*year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[8:11] ~ ipa*site*year - ipa:site:year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[8:11] ~ ipa+site+year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+#site
 
-FD_dist <- vegdist(mFD_results[,c("FDis", "FEve", "FRic", "FDiv")], method = "euc")
+#Species_Richness
+adonis2(mFD_results[7] ~ ipa*site*year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[7] ~ ipa*site*year - ipa:site:year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+#ipa:site
+adonis2(mFD_results[7] ~ ipa+site+year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+#site + year
 
-adonis2(FD_dist ~ ipa + site + year, data = mFD_results, permutations = split_plot_shuffle, by = "margin")
+#FRic
+adonis2(mFD_results[10] ~ ipa*site*year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+#significant
+adonis2(mFD_results[10] ~ ipa*site*year - ipa:site:year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[10] ~ ipa+site+year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+
+#FEve
+adonis2(mFD_results[9] ~ ipa*site*year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[9] ~ ipa*site*year - ipa:site:year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[9] ~ ipa+site+year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+
+#FDiv
+adonis2(mFD_results[11] ~ ipa*site*year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[11] ~ ipa*site*year - ipa:site:year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[11] ~ ipa+site+year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+
+#FDis
+adonis2(mFD_results[8] ~ ipa*site*year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[8] ~ ipa*site*year - ipa:site:year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[8] ~ ipa+site+year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+#site
+
+#pairwise tests
+library(pairwiseAdonis)
+
+pairwise.adonis2(mFD_results['Species_Richness'] ~ site, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean" )
+pairwise.adonis2(mFD_results['Species_Richness'] ~ year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean" )
+pairwise.adonis2(mFD_results['FDis'] ~ site, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean" )
+
+
+#### permdisp ####
+FD_dist <- vegdist(mFD_results[8:11], method = "euclidean")
 
 ipa.disp <- betadisper(FD_dist, mFD_results$ipa, type = c("median"), bias.adjust = FALSE,
                        sqrt.dist = FALSE, add = FALSE)
 
 boxplot(ipa.disp)
-permutest(ipa.disp, pairwise = TRUE)
-
-#check to see if sites are different 
-
-#specify the permutations
-whole_plot_shuffle <- how(within = Within(type = "none"),
-                          plots = Plots(strata = mFD_results$site, type = "free"),
-                          nperm = 999, #max is 720 for our sample size
-                          observed = TRUE)
-
-#check permutation structure
-# head(mFD_results[, c("site", "ipa", "year")], 15)
-# check(mFD_results, control =whole_plot_shuffle)
-# head(mFD_results[shuffle(nrow(mFD_results), control = whole_plot_shuffle), c("site", "ipa", "year")], 15)
-
-adonis2(FD_dist ~ site + year, #including site and year so we can parse out that variance
-        data = mFD_results, permutations = whole_plot_shuffle, by = "margin")
-#another, less conservative, approach would be to do unrestricted permutations at this stage because there wasn't a significant difference in 
-#ipas. This approach is suggested in Anderson and Braak, 2003. It is, however, debated whether this is an appropriate approach
-#and the documentation for PRIMER-E suggests that discarding an aspect of your study design is something to think twice about because it 
-#may not be wise to assume there aren't differences just because you didn't find them. 
+permutest(ipa.disp, pairwise = TRUE, permutations = 9999)
 
 
 site.disp <- betadisper(FD_dist, mFD_results$site, type = c("median"), bias.adjust = FALSE,
                         sqrt.dist = FALSE, add = FALSE)
 
 boxplot(site.disp)
-permutest(site.disp, pairwise = TRUE)
+permutest(site.disp, pairwise = TRUE, permutations = 9999)
+
+region.disp <- betadisper(FD_dist, mFD_results$region, type = c("median"), bias.adjust = FALSE,
+                        sqrt.dist = FALSE, add = FALSE)
+
+boxplot(region.disp)
+permutest(region.disp, pairwise = TRUE, permutations = 9999)
+
+#### rda for site ####
+mod <- rda(mFD_results[8:11] ~ ipa + site + year, data = mFD_results)
+plot(mod)
+
+rda_scores <- scores(mod)
+sites_scores <- as.data.frame(rda_scores[[1]])
+biplot_scores <- as.data.frame(rda_scores[[2]])
+
+RDA_ordiplot <- gg_ordiplot(ord = biplot_scores, #for some reason the scale gets weird if you don't specify this
+                              groups = mFD_results$site,
+                              ellipse = TRUE,
+                              hull = FALSE,
+                              spiders = FALSE)
+
+points <- biplot_scores %>% 
+  cbind(mFD_results %>% select(site:year))
+
+ggplot() +
+  geom_point(data = points, aes(x = RDA1, y = RDA2, color = site, shape = ipa), size = 3) + 
+  # geom_text_repel(data = points, aes(x = MDS1, y = MDS2, color = site, label = month)) +
+  # geom_polygon(data = hulls, aes(x = MDS1, y = MDS2, fill = site), alpha = 0.2) +
+  # annotate("text", x = Inf, y = Inf, label = paste("stress = ", S), vjust = 2, hjust = 2) +
+  # annotate("text", x = Inf, y = Inf, label = paste("k = ", K), vjust = 2, hjust = 2) +
+  theme_minimal() 
+
+
+#### rda for region ####
+mod2 <- rda(mFD_results[8:11] ~ region + ipa, data = mFD_results)
+plot(mod2)
+
+rda_scores <- scores(mod2)
+sites_scores <- as.data.frame(rda_scores[[1]])
+biplot_scores <- as.data.frame(rda_scores[[2]])
+
+# RDA_ordiplot <- gg_ordiplot(ord = biplot_scores, #for some reason the scale gets weird if you don't specify this
+#                             groups = mFD_results$site,
+#                             ellipse = TRUE,
+#                             hull = FALSE,
+#                             spiders = FALSE)
+
+points <- biplot_scores %>% 
+  cbind(mFD_results %>% select(site:year))
+
+ggplot(data = points, aes(x = RDA1, y = RDA2, color = region)) +
+  geom_text(size = 3, aes(label = shoreline)) + 
+  stat_ellipse(aes(group = region, color = region), 
+               linetype = "dashed", show.legend = FALSE) +
+  # geom_text_repel(data = points, aes(x = MDS1, y = MDS2, color = site, label = month)) +
+  # geom_polygon(data = hulls, aes(x = MDS1, y = MDS2, fill = site), alpha = 0.2) +
+  # annotate("text", x = Inf, y = Inf, label = paste("stress = ", S), vjust = 2, hjust = 2) +
+  # annotate("text", x = Inf, y = Inf, label = paste("k = ", K), vjust = 2, hjust = 2) +
+  theme_minimal() 
+
+
