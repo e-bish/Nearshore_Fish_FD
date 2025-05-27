@@ -15,12 +15,12 @@ set.seed(2025)
 
 load(here("data", "fish.list.Rdata"))
 
-# fish.list$trait <- fish.list$trait %>% 
-#   select(!migrations)
+fish.list$trait <- fish.list$trait %>%
+  select(!migrations)
 
 #### run with mFD ####
 traits_cat <- data.frame(trait_name = colnames(fish.list$trait),
-                         trait_type = c("Q", "N", "N", "N", "N"))
+                         trait_type = c("Q", "N", "N", "N"))
 
 #Species trait summary
 traits_summary <- sp.tr.summary(tr_cat = traits_cat, 
@@ -97,7 +97,7 @@ mFD_results <- mFD_values %>%
          across(where(is.numeric), ~replace_na(., 0))) %>% 
   mutate(ipa = ifelse(ipa == "Natural2", "Natural", ipa)) 
 
-# save(mFD_results, file = here("data","mFD_results.Rdata")) #last saved 3/21/25
+# save(mFD_results, file = here("data","mFD_results.Rdata")) #last saved 5/27/25 without migrations
 load(here("data","mFD_results.Rdata"))
 
 #plot with full range
@@ -268,6 +268,31 @@ mFD_results %>%
 ggsave(here("figures", "figure_S2.png"), 
        width = 8, height = 6, dpi = 300) 
 
+#### FD by region ####
+mFD_results %>% 
+  pivot_longer(!c(site, ipa, year, shoreline, region, veg), names_to = "metric", values_to = "value") %>% 
+  ggplot(aes(x = region, y = value)) +
+  geom_boxplot() +
+  geom_point(show.legend = FALSE) +
+  theme_classic() +
+  facet_wrap(~factor(metric, levels = c("Species_Richness", "FDis", "FRic", "FEve", "FDiv"),
+                     labels = c("Species Richness", "FDis", "FRic", "FEve", "FDiv")),
+             scales = "free_y") + 
+  labs(x = "Region", y = "Value") + 
+  theme(strip.background = element_rect(fill = NA, colour = NA))
+
+#### FD by year ####
+mFD_results %>% 
+  pivot_longer(!c(site, ipa, year, shoreline, region, veg), names_to = "metric", values_to = "value") %>% 
+  ggplot(aes(x = year, y = value)) +
+  geom_boxplot() +
+  geom_point(show.legend = FALSE) +
+  theme_classic() +
+  facet_wrap(~factor(metric, levels = c("Species_Richness", "FDis", "FRic", "FEve", "FDiv"),
+                     labels = c("Species Richness", "FDis", "FRic", "FEve", "FDiv")),
+             scales = "free_y") + 
+  labs(x = "Condition category", y = "Value") + 
+  theme(strip.background = element_rect(fill = NA, colour = NA))
 
 #### permanova ####
 
@@ -285,9 +310,10 @@ adonis2(mFD_results[7] ~ ipa+site+year, data = mFD_results, permutations = 9999,
 
 #FRic
 adonis2(mFD_results[10] ~ ipa*site*year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
-#significant
+#significant with migrations
 adonis2(mFD_results[10] ~ ipa*site*year - ipa:site:year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
 adonis2(mFD_results[10] ~ ipa+site+year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+#site + year 
 
 #FEve
 adonis2(mFD_results[9] ~ ipa*site*year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
@@ -329,14 +355,8 @@ site.disp <- betadisper(FD_dist, mFD_results$site, type = c("median"), bias.adju
 boxplot(site.disp)
 permutest(site.disp, pairwise = TRUE, permutations = 9999)
 
-region.disp <- betadisper(FD_dist, mFD_results$region, type = c("median"), bias.adjust = FALSE,
-                        sqrt.dist = FALSE, add = FALSE)
-
-boxplot(region.disp)
-permutest(region.disp, pairwise = TRUE, permutations = 9999)
-
 #### rda for site ####
-mod <- rda(mFD_results[8:11] ~ ipa + site + year, data = mFD_results)
+mod <- rda(mFD_results['FRic'] ~ ipa + site + year, data = mFD_results)
 plot(mod)
 
 rda_scores <- scores(mod)
@@ -352,17 +372,84 @@ RDA_ordiplot <- gg_ordiplot(ord = biplot_scores, #for some reason the scale gets
 points <- biplot_scores %>% 
   cbind(mFD_results %>% select(site:year))
 
-ggplot() +
-  geom_point(data = points, aes(x = RDA1, y = RDA2, color = site, shape = ipa), size = 3) + 
+ggplot(data = points, aes(x = RDA1, y = RDA2)) +
+  geom_point(aes(color = ipa, shape = site), size = 3) + 
+  # stat_ellipse(aes(group = site, color = site), 
+  #              linetype = "dashed", show.legend = FALSE) +
   # geom_text_repel(data = points, aes(x = MDS1, y = MDS2, color = site, label = month)) +
   # geom_polygon(data = hulls, aes(x = MDS1, y = MDS2, fill = site), alpha = 0.2) +
   # annotate("text", x = Inf, y = Inf, label = paste("stress = ", S), vjust = 2, hjust = 2) +
   # annotate("text", x = Inf, y = Inf, label = paste("k = ", K), vjust = 2, hjust = 2) +
   theme_minimal() 
 
+#### permanova region ####
+#approach #1
+mFD_results.region <- mFD_results %>% 
+  pivot_longer(!c(shoreline, site, ipa, year, region, veg), 
+               names_to = "metric", values_to = "value") %>% 
+  group_by(site, region, year, metric) %>% 
+  summarize(site_avg = mean(value)) %>% 
+  pivot_wider(names_from = metric, values_from = site_avg)
+
+adonis2(mFD_results.region[4:7] ~ region*year, data = mFD_results.region, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results.region[4:7] ~ region+year, data = mFD_results.region, permutations = 9999, by = "margin", method = "euclidean")
+#region
+
+#Species_Richness
+adonis2(mFD_results.region['Species_Richness'] ~ region*year, data = mFD_results.region, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results.region['Species_Richness'] ~ region+year, data = mFD_results.region, permutations = 9999, by = "margin", method = "euclidean")
+#region
+
+#FRic
+adonis2(mFD_results.region['FRic'] ~ region*year, data = mFD_results.region, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results.region["FRic"] ~ region+year, data = mFD_results.region, permutations = 9999, by = "margin", method = "euclidean")
+#region
+
+#FEve
+adonis2(mFD_results.region['FEve'] ~ region*year, data = mFD_results.region, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results.region['FEve'] ~ region+year, data = mFD_results.region, permutations = 9999, by = "margin", method = "euclidean")
+#region
+
+#FDiv
+adonis2(mFD_results.region['FDiv'] ~ region*year, data = mFD_results.region, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results.region['FDiv'] ~ region+year, data = mFD_results.region, permutations = 9999, by = "margin", method = "euclidean")
+
+
+#FDis
+adonis2(mFD_results.region['FDis'] ~ region*year, data = mFD_results.region, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results.region['FDis'] ~ region+year, data = mFD_results.region, permutations = 9999, by = "margin", method = "euclidean")
+
+## approach #2
+whole_plot_shuffle <- how(within = Within(type = "none"),
+                          plots = Plots(strata = mFD_results$site, type = "free"),
+                          nperm = 999) #max is 720 for 6 sites
+                          
+adonis2(mFD_results[8:11] ~ region*year, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
+adonis2(mFD_results[8:11] ~ region+year, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
+#year
+
+adonis2(mFD_results['Species_Richness'] ~ region*year, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
+adonis2(mFD_results['Species_Richness'] ~ region+year, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
+#year
+
+adonis2(mFD_results['FRic'] ~ region*year, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
+adonis2(mFD_results['FRic'] ~ region+year, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
+
+
+adonis2(mFD_results['FEve'] ~ region*year, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
+adonis2(mFD_results['FEve'] ~ region+year, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
+#region
+
+adonis2(mFD_results['FDiv'] ~ region*year, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
+adonis2(mFD_results['FDiv'] ~ region+year, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
+#year
+
+adonis2(mFD_results['FDis'] ~ region*year, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
+adonis2(mFD_results['FDis'] ~ region+year, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
+
 
 #### rda for region ####
-mod2 <- rda(mFD_results[8:11] ~ region + ipa, data = mFD_results)
+mod2 <- rda(mFD_results.region[4:7] ~ region + year, data = mFD_results.region)
 plot(mod2)
 
 rda_scores <- scores(mod2)
@@ -376,10 +463,10 @@ biplot_scores <- as.data.frame(rda_scores[[2]])
 #                             spiders = FALSE)
 
 points <- biplot_scores %>% 
-  cbind(mFD_results %>% select(site:year))
+  cbind(mFD_results.region %>% select(site:year))
 
 ggplot(data = points, aes(x = RDA1, y = RDA2, color = region)) +
-  geom_text(size = 3, aes(label = shoreline)) + 
+  geom_text(size = 3, aes(label = site)) + 
   stat_ellipse(aes(group = region, color = region), 
                linetype = "dashed", show.legend = FALSE) +
   # geom_text_repel(data = points, aes(x = MDS1, y = MDS2, color = site, label = month)) +
@@ -388,4 +475,10 @@ ggplot(data = points, aes(x = RDA1, y = RDA2, color = region)) +
   # annotate("text", x = Inf, y = Inf, label = paste("k = ", K), vjust = 2, hjust = 2) +
   theme_minimal() 
 
+region_dist <- vegdist(mFD_results.region[4:8], method = "euclidean")
 
+region.disp <- betadisper(region_dist, mFD_results.region$region, type = c("median"), bias.adjust = FALSE,
+                          sqrt.dist = FALSE, add = FALSE)
+
+boxplot(region.disp)
+permutest(region.disp, pairwise = TRUE, permutations = 9999)
