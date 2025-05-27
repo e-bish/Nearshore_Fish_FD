@@ -4,7 +4,10 @@ library(FD)
 library(RColorBrewer)
 
 #load abundance and trait data
-load(here("data", "fish.list.Rdata")) #last saved 3/21/25
+load(here("data", "fish.list.Rdata"))
+
+fish.list$trait <- fish.list$trait %>%
+  select(!migrations)
 
 SOS_core_sites <- factor(c("FAM", "TUR", "COR", "SHR", "DOK", "EDG"), 
                          levels = c("FAM", "TUR", "COR", "SHR", "DOK", "EDG"))
@@ -13,6 +16,8 @@ SOS_core_sites <- factor(c("FAM", "TUR", "COR", "SHR", "DOK", "EDG"),
 fish_cwm <- functcomp(x = fish.list$trait,
                       a = as.matrix(fish.list$abund),
                       CWM.type = "dom")
+
+
 
 fish_cwm_df <- fish_cwm %>% 
   rownames_to_column( "sample") %>% 
@@ -34,9 +39,11 @@ fish_cwm_long <- fish_cwm_df %>%
 
 bs_col <- brewer.pal(n = 4, "Blues")
 dp_col <- brewer.pal(n = 4, "YlGn")
-mi_col <- brewer.pal(n = 3, "Reds")
+# mi_col <- brewer.pal(n = 3, "Reds")
 fg_col <- brewer.pal(n = 3, "RdPu")
-trait_cols <- c(bs_col, dp_col, mi_col, fg_col)
+trait_cols <- c(bs_col, dp_col,
+                # mi_col,
+                fg_col)
 
 #by site
 trait_wrap <- fish_cwm_long %>% 
@@ -49,8 +56,7 @@ trait_wrap <- fish_cwm_long %>%
   facet_wrap(~factor(trait_group, 
                      labels = c("Body Shape",
                                 "Water Column Position",
-                                "Feeding Guild",
-                                "Migrations"))) +
+                                "Feeding Guild"))) +
   labs(fill = "Traits", y = "Proportion of sampling points where dominant", x = "Site")
 
 length_cwm <- fish_cwm_df %>% 
@@ -89,8 +95,7 @@ ipa_trait_wrap <- fish_cwm_long %>%
   facet_wrap(~factor(trait_group, 
                      labels = c("Body Shape",
                                 "Water Column Position",
-                                "Feeding Guild",
-                                "Migrations"))) +
+                                "Feeding Guild"))) +
   labs(fill = "Traits", y = "Proportion of sampling points where dominant", x = "Condition category")
 
 
