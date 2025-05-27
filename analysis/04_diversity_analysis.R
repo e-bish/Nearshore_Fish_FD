@@ -384,6 +384,42 @@ ggplot(data = points, aes(x = RDA1, y = RDA2)) +
 
 #### permanova region ####
 #approach #1
+adonis2(mFD_results[8:11] ~ ipa*region*year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[8:11] ~ ipa*region*year - ipa:region:year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[8:11] ~ ipa+region+year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+#region
+
+#Species_Richness
+adonis2(mFD_results[7] ~ ipa*region*year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[7] ~ ipa*region*year - ipa:region:year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[7] ~ ipa+region+year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+#region
+
+#FRic
+adonis2(mFD_results[10] ~ ipa*region*year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[10] ~ ipa*region*year - ipa:region:year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[10] ~ ipa+region+year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+#region
+
+#FEve
+adonis2(mFD_results[9] ~ ipa*region*year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[9] ~ ipa*region*year - ipa:region:year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[9] ~ ipa+region+year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+#region
+
+#FDiv
+adonis2(mFD_results[11] ~ ipa*region*year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[11] ~ ipa*region*year - ipa:region:year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[11] ~ ipa+region+year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+#region
+
+#FDis
+adonis2(mFD_results[8] ~ ipa*region*year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[8] ~ ipa*region*year - ipa:region:year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[8] ~ ipa+region+year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+
+
+#approach #2 (similar results to approach 1)
 mFD_results.region <- mFD_results %>% 
   pivot_longer(!c(shoreline, site, ipa, year, region, veg), 
                names_to = "metric", values_to = "value") %>% 
@@ -419,13 +455,13 @@ adonis2(mFD_results.region['FDiv'] ~ region+year, data = mFD_results.region, per
 adonis2(mFD_results.region['FDis'] ~ region*year, data = mFD_results.region, permutations = 9999, by = "margin", method = "euclidean")
 adonis2(mFD_results.region['FDis'] ~ region+year, data = mFD_results.region, permutations = 9999, by = "margin", method = "euclidean")
 
-## approach #2
+## approach #3 (year is more often significant than region)
 whole_plot_shuffle <- how(within = Within(type = "none"),
                           plots = Plots(strata = mFD_results$site, type = "free"),
                           nperm = 999) #max is 720 for 6 sites
                           
 adonis2(mFD_results[8:11] ~ region*year, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
-adonis2(mFD_results[8:11] ~ region+year, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
+adonis2(mFD_results[8:11] ~ region+year+ipa, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
 #year
 
 adonis2(mFD_results['Species_Richness'] ~ region*year, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
