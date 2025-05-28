@@ -15,6 +15,8 @@ load(here("data", "fish.list.season.Rdata"))
 
 fish.list <- fish.list.season
 
+fish.list$trait <- fish.list$trait %>% select(!migrations)
+
 #### run with mFD ####
 traits_cat <- data.frame(trait_name = colnames(fish.list$trait),
                          trait_type = c("Q", "N", "N", "N"))
@@ -47,7 +49,7 @@ trait_space <- space_quality$"details_fspaces"$"sp_pc_coord"
 #test correlations between traits and axes
 traits_correlations <- traits.faxes.cor(
   sp_tr          = fish.list$trait, 
-  sp_faxes_coord = trait_space[ , c("PC1", "PC2", "PC3", "PC4")], 
+  sp_faxes_coord = trait_space[ , c("PC1", "PC2", "PC3")], 
   plot           = TRUE)
 
 traits_correlations$"tr_faxes_stat"[which(traits_correlations$"tr_faxes_stat"$"p.value" < 0.05), ]
@@ -71,7 +73,7 @@ metrics_clean <- c("Species Richness", "FDis", "FEve", "FRic", "FDiv")
 
 colnames(mFD_values)[1:5] <- metrics
 
-load(here("data", "rows_w_few_spp_season.Rdata"))
+load(here("data", "rows_w_few_spp_season1.Rdata"))
 
 add_small_samples_back <- rows_w_few_spp %>% 
   rownames_to_column(var = "sample") %>% 
@@ -91,10 +93,11 @@ mFD_results <- mFD_values %>%
                                             ipa == "Restored" ~ "R", 
                                             ipa == "Natural2" ~ "N2",
                                             TRUE ~ "N")),
+         season = factor(season, levels = c("Apr-May", "Jun-Jul", "Aug-Sept")),
          across(where(is.numeric), ~replace_na(., 0))) %>% 
   mutate(ipa = ifelse(ipa == "Natural2", "Natural", ipa)) 
 
-# save(mFD_results, file = here("data","mFD_results_season.Rdata")) #last saved 5/23/25
+# save(mFD_results, file = here("data","mFD_results_season.Rdata")) #last saved 5/27/25
 load(here("data","mFD_results_season.Rdata"))
 
 #plot with full range
@@ -254,7 +257,75 @@ mFD_results %>%
   facet_wrap(~factor(metric, levels = c("Species_Richness", "FDis", "FRic", "FEve", "FDiv"),
                      labels = c("Species Richness", "FDis", "FRic", "FEve", "FDiv")),
              scales = "free_y") + 
-  labs(x = "Condition category", y = "Value") + 
+  labs(x = "Season", y = "Value") + 
   theme(strip.background = element_rect(fill = NA, colour = NA))
 
 #### permanova ####
+adonis2(mFD_results[8:11] ~ ipa*site*season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[8:11] ~ ipa*site*season - ipa:site:season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[8:11] ~ ipa+site+season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+#site + season
+
+#Species_Richness
+adonis2(mFD_results[7] ~ ipa*site*season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[7] ~ ipa*site*season - ipa:site:season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+#ipa:site and site:season
+adonis2(mFD_results[7] ~ ipa+site+season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+#site + season
+
+#FRic
+adonis2(mFD_results[10] ~ ipa*site*season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[10] ~ ipa*site*season - ipa:site:season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+#site:season
+adonis2(mFD_results[10] ~ ipa+site+season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+#site + season 
+
+#FEve
+adonis2(mFD_results[9] ~ ipa*site*season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[9] ~ ipa*site*season - ipa:site:season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[9] ~ ipa+site+season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+
+#FDiv
+adonis2(mFD_results[11] ~ ipa*site*season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[11] ~ ipa*site*season - ipa:site:season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[11] ~ ipa+site+season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+#site
+
+#FDis
+adonis2(mFD_results[8] ~ ipa*site*season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[8] ~ ipa*site*season - ipa:site:season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[8] ~ ipa+site+season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+
+#### region permanova ####
+#approach #1
+adonis2(mFD_results[8:11] ~ ipa*region*season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[8:11] ~ ipa*region*season - ipa:region:season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[8:11] ~ region+ipa+season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+#region + season
+
+#Species_Richness
+adonis2(mFD_results['Species_Richness'] ~ ipa*region*season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results['Species_Richness'] ~ ipa*region*season - ipa:region:season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results['Species_Richness'] ~ region+ipa+season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+#region + season
+
+#FRic
+adonis2(mFD_results['FRic'] ~ ipa*region*season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results['FRic'] ~ ipa*region*season - ipa:region:season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results['FRic'] ~ region+ipa+season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+#region + season
+
+#FEve
+adonis2(mFD_results[9] ~ ipa*region*season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[9] ~ ipa*region*season - ipa:region:season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results['FEve'] ~ region+ipa+season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+
+#FDiv
+adonis2(mFD_results[11] ~ ipa*region*season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[11] ~ ipa*region*season - ipa:region:season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results['FDiv'] ~ region+ipa+season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+
+#FDis
+adonis2(mFD_results[8] ~ ipa*region*season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[8] ~ ipa*region*season - ipa:region:season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results['FDis'] ~ region+ipa+season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")

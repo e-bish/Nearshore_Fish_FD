@@ -324,6 +324,7 @@ adonis2(mFD_results[9] ~ ipa+site+year, data = mFD_results, permutations = 9999,
 adonis2(mFD_results[11] ~ ipa*site*year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
 adonis2(mFD_results[11] ~ ipa*site*year - ipa:site:year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
 adonis2(mFD_results[11] ~ ipa+site+year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+#site
 
 #FDis
 adonis2(mFD_results[8] ~ ipa*site*year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
@@ -336,6 +337,8 @@ library(pairwiseAdonis)
 
 pairwise.adonis2(mFD_results['Species_Richness'] ~ site, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean" )
 pairwise.adonis2(mFD_results['Species_Richness'] ~ year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean" )
+pairwise.adonis2(mFD_results['FRic'] ~ site, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean" )
+
 pairwise.adonis2(mFD_results['FDis'] ~ site, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean" )
 
 
@@ -386,106 +389,41 @@ ggplot(data = points, aes(x = RDA1, y = RDA2)) +
 #approach #1
 adonis2(mFD_results[8:11] ~ ipa*region*year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
 adonis2(mFD_results[8:11] ~ ipa*region*year - ipa:region:year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
-adonis2(mFD_results[8:11] ~ ipa+region+year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[8:11] ~ region+ipa+year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
 #region
 
 #Species_Richness
-adonis2(mFD_results[7] ~ ipa*region*year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
-adonis2(mFD_results[7] ~ ipa*region*year - ipa:region:year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
-adonis2(mFD_results[7] ~ ipa+region+year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results['Species_Richness'] ~ ipa*region*year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results['Species_Richness'] ~ ipa*region*year - ipa:region:year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results['Species_Richness'] ~ region+ipa+year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
 #region
 
 #FRic
-adonis2(mFD_results[10] ~ ipa*region*year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
-adonis2(mFD_results[10] ~ ipa*region*year - ipa:region:year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
-adonis2(mFD_results[10] ~ ipa+region+year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results['FRic'] ~ ipa*region*year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results['FRic'] ~ ipa*region*year - ipa:region:year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results['FRic'] ~ region+ipa+year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
 #region
 
 #FEve
 adonis2(mFD_results[9] ~ ipa*region*year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
 adonis2(mFD_results[9] ~ ipa*region*year - ipa:region:year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
-adonis2(mFD_results[9] ~ ipa+region+year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results['FEve'] ~ region+ipa+year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
 #region
 
 #FDiv
 adonis2(mFD_results[11] ~ ipa*region*year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
 adonis2(mFD_results[11] ~ ipa*region*year - ipa:region:year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
-adonis2(mFD_results[11] ~ ipa+region+year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results['FDiv'] ~ region+ipa+year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
 #region
 
 #FDis
 adonis2(mFD_results[8] ~ ipa*region*year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
 adonis2(mFD_results[8] ~ ipa*region*year - ipa:region:year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
-adonis2(mFD_results[8] ~ ipa+region+year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
-
-
-#approach #2 (similar results to approach 1)
-mFD_results.region <- mFD_results %>% 
-  pivot_longer(!c(shoreline, site, ipa, year, region, veg), 
-               names_to = "metric", values_to = "value") %>% 
-  group_by(site, region, year, metric) %>% 
-  summarize(site_avg = mean(value)) %>% 
-  pivot_wider(names_from = metric, values_from = site_avg)
-
-adonis2(mFD_results.region[4:7] ~ region*year, data = mFD_results.region, permutations = 9999, by = "margin", method = "euclidean")
-adonis2(mFD_results.region[4:7] ~ region+year, data = mFD_results.region, permutations = 9999, by = "margin", method = "euclidean")
-#region
-
-#Species_Richness
-adonis2(mFD_results.region['Species_Richness'] ~ region*year, data = mFD_results.region, permutations = 9999, by = "margin", method = "euclidean")
-adonis2(mFD_results.region['Species_Richness'] ~ region+year, data = mFD_results.region, permutations = 9999, by = "margin", method = "euclidean")
-#region
-
-#FRic
-adonis2(mFD_results.region['FRic'] ~ region*year, data = mFD_results.region, permutations = 9999, by = "margin", method = "euclidean")
-adonis2(mFD_results.region["FRic"] ~ region+year, data = mFD_results.region, permutations = 9999, by = "margin", method = "euclidean")
-#region
-
-#FEve
-adonis2(mFD_results.region['FEve'] ~ region*year, data = mFD_results.region, permutations = 9999, by = "margin", method = "euclidean")
-adonis2(mFD_results.region['FEve'] ~ region+year, data = mFD_results.region, permutations = 9999, by = "margin", method = "euclidean")
-#region
-
-#FDiv
-adonis2(mFD_results.region['FDiv'] ~ region*year, data = mFD_results.region, permutations = 9999, by = "margin", method = "euclidean")
-adonis2(mFD_results.region['FDiv'] ~ region+year, data = mFD_results.region, permutations = 9999, by = "margin", method = "euclidean")
-
-
-#FDis
-adonis2(mFD_results.region['FDis'] ~ region*year, data = mFD_results.region, permutations = 9999, by = "margin", method = "euclidean")
-adonis2(mFD_results.region['FDis'] ~ region+year, data = mFD_results.region, permutations = 9999, by = "margin", method = "euclidean")
-
-## approach #3 (year is more often significant than region)
-whole_plot_shuffle <- how(within = Within(type = "none"),
-                          plots = Plots(strata = mFD_results$site, type = "free"),
-                          nperm = 999) #max is 720 for 6 sites
-                          
-adonis2(mFD_results[8:11] ~ region*year, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
-adonis2(mFD_results[8:11] ~ region+year+ipa, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
-#year
-
-adonis2(mFD_results['Species_Richness'] ~ region*year, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
-adonis2(mFD_results['Species_Richness'] ~ region+year, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
-#year
-
-adonis2(mFD_results['FRic'] ~ region*year, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
-adonis2(mFD_results['FRic'] ~ region+year, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
-
-
-adonis2(mFD_results['FEve'] ~ region*year, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
-adonis2(mFD_results['FEve'] ~ region+year, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
-#region
-
-adonis2(mFD_results['FDiv'] ~ region*year, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
-adonis2(mFD_results['FDiv'] ~ region+year, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
-#year
-
-adonis2(mFD_results['FDis'] ~ region*year, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
-adonis2(mFD_results['FDis'] ~ region+year, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
+adonis2(mFD_results['FDis'] ~ region+ipa+year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
 
 
 #### rda for region ####
-mod2 <- rda(mFD_results.region[4:7] ~ region + year, data = mFD_results.region)
+mod2 <- rda(mFD_results[8:11] ~ region + ipa + year, data = mFD_results)
 plot(mod2)
 
 rda_scores <- scores(mod2)
@@ -499,7 +437,7 @@ biplot_scores <- as.data.frame(rda_scores[[2]])
 #                             spiders = FALSE)
 
 points <- biplot_scores %>% 
-  cbind(mFD_results.region %>% select(site:year))
+  cbind(mFD_results %>% select(site:year))
 
 ggplot(data = points, aes(x = RDA1, y = RDA2, color = region)) +
   geom_text(size = 3, aes(label = site)) + 
@@ -511,9 +449,9 @@ ggplot(data = points, aes(x = RDA1, y = RDA2, color = region)) +
   # annotate("text", x = Inf, y = Inf, label = paste("k = ", K), vjust = 2, hjust = 2) +
   theme_minimal() 
 
-region_dist <- vegdist(mFD_results.region[4:8], method = "euclidean")
+region_dist <- vegdist(mFD_results[8:11], method = "euclidean")
 
-region.disp <- betadisper(region_dist, mFD_results.region$region, type = c("median"), bias.adjust = FALSE,
+region.disp <- betadisper(region_dist, mFD_results$region, type = c("median"), bias.adjust = FALSE,
                           sqrt.dist = FALSE, add = FALSE)
 
 boxplot(region.disp)

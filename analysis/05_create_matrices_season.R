@@ -158,4 +158,4 @@ fish.list.season <- list("trait" = fish_Q,
                   "abund" = fish_L,
                   "meta" = fish_meta) 
 
-save(fish.list.season, file = here("data", "fish.list.season.Rdata")) #last saved 04/19/25
+save(fish.list.season, file = here("data", "fish.list.season.Rdata")) #saved 5/27/25
