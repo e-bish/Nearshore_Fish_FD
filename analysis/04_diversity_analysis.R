@@ -248,7 +248,7 @@ mFD_results %>%
   facet_wrap(~factor(metric, levels = c("Species_Richness", "FDis", "FRic", "FEve", "FDiv"),
                      labels = c("Species Richness", "FDis", "FRic", "FEve", "FDiv")),
              scales = "free_y") + 
-  labs(x = "Condition category", y = "Value") + 
+  labs(x = "Site", y = "Value") + 
   theme(strip.background = element_rect(fill = NA, colour = NA))
 
 
@@ -279,6 +279,19 @@ mFD_results %>%
                      labels = c("Species Richness", "FDis", "FRic", "FEve", "FDiv")),
              scales = "free_y") + 
   labs(x = "Region", y = "Value") + 
+  theme(strip.background = element_rect(fill = NA, colour = NA))
+
+#### FD by veg ####
+mFD_results %>% 
+  pivot_longer(!c(site, ipa, year, shoreline, region, veg), names_to = "metric", values_to = "value") %>% 
+  ggplot(aes(x = veg, y = value)) +
+  geom_boxplot() +
+  geom_point(show.legend = FALSE) +
+  theme_classic() +
+  facet_wrap(~factor(metric, levels = c("Species_Richness", "FDis", "FRic", "FEve", "FDiv"),
+                     labels = c("Species Richness", "FDis", "FRic", "FEve", "FDiv")),
+             scales = "free_y") + 
+  labs(x = "Eelgrass", y = "Value") + 
   theme(strip.background = element_rect(fill = NA, colour = NA))
 
 #### FD by year ####
@@ -359,7 +372,7 @@ boxplot(site.disp)
 permutest(site.disp, pairwise = TRUE, permutations = 9999)
 
 #### rda for site ####
-mod <- rda(mFD_results['FRic'] ~ ipa + site + year, data = mFD_results)
+mod <- rda(mFD_results[8:11] ~ ipa + site + year, data = mFD_results)
 plot(mod)
 
 rda_scores <- scores(mod)
@@ -386,22 +399,25 @@ ggplot(data = points, aes(x = RDA1, y = RDA2)) +
   theme_minimal() 
 
 #### permanova region ####
+
+
+
 #approach #1
 adonis2(mFD_results[8:11] ~ ipa*region*year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
 adonis2(mFD_results[8:11] ~ ipa*region*year - ipa:region:year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
-adonis2(mFD_results[8:11] ~ region+ipa+year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[8:11] ~ region+veg, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
 #region
 
 #Species_Richness
 adonis2(mFD_results['Species_Richness'] ~ ipa*region*year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
 adonis2(mFD_results['Species_Richness'] ~ ipa*region*year - ipa:region:year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
-adonis2(mFD_results['Species_Richness'] ~ region+ipa+year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results['Species_Richness'] ~ region+veg, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
 #region
 
 #FRic
 adonis2(mFD_results['FRic'] ~ ipa*region*year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
 adonis2(mFD_results['FRic'] ~ ipa*region*year - ipa:region:year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
-adonis2(mFD_results['FRic'] ~ region+ipa+year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results['FRic'] ~ region+veg, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
 #region
 
 #FEve

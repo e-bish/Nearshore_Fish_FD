@@ -247,6 +247,19 @@ mFD_results %>%
   labs(x = "Condition category", y = "Value") + 
   theme(strip.background = element_rect(fill = NA, colour = NA))
 
+#region
+mFD_results %>% 
+  pivot_longer(!c(site, ipa, season, shoreline, region, veg), names_to = "metric", values_to = "value") %>% 
+  ggplot(aes(x = region, y = value)) +
+  geom_boxplot() +
+  geom_point(show.legend = FALSE) +
+  theme_classic() +
+  facet_wrap(~factor(metric, levels = c("Species_Richness", "FDis", "FRic", "FEve", "FDiv"),
+                     labels = c("Species Richness", "FDis", "FRic", "FEve", "FDiv")),
+             scales = "free_y") + 
+  labs(x = "Season", y = "Value") + 
+  theme(strip.background = element_rect(fill = NA, colour = NA))
+
 #season
 mFD_results %>% 
   pivot_longer(!c(site, ipa, season, shoreline, region, veg), names_to = "metric", values_to = "value") %>% 
@@ -304,7 +317,7 @@ adonis2(mFD_results[8:11] ~ region+ipa+season, data = mFD_results, permutations 
 #region + season
 
 #Species_Richness
-adonis2(mFD_results['Species_Richness'] ~ ipa*region*season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results['Species_Richness'] ~ ipa**region*season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
 adonis2(mFD_results['Species_Richness'] ~ ipa*region*season - ipa:region:season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
 adonis2(mFD_results['Species_Richness'] ~ region+ipa+season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
 #region + season
@@ -329,3 +342,136 @@ adonis2(mFD_results['FDiv'] ~ region+ipa+season, data = mFD_results, permutation
 adonis2(mFD_results[8] ~ ipa*region*season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
 adonis2(mFD_results[8] ~ ipa*region*season - ipa:region:season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
 adonis2(mFD_results['FDis'] ~ region+ipa+season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+
+
+library(pairwiseAdonis)
+FD_dist_FRic <- vegdist(mFD_results['FRic'], method = "euclidean")
+
+pairwise.adonis2(FD_dist ~ season, data = mFD_results)
+
+## RDA
+mod <- rda(mFD_results[8:11] ~ ipa + site + season, data = mFD_results)
+plot(mod)
+
+rda_scores <- scores(mod)
+sites_scores <- as.data.frame(rda_scores[[1]])
+biplot_scores <- as.data.frame(rda_scores[[2]])
+
+RDA_ordiplot <- gg_ordiplot(ord = biplot_scores, #for some reason the scale gets weird if you don't specify this
+                            groups = mFD_results$site,
+                            ellipse = TRUE,
+                            hull = FALSE,
+                            spiders = FALSE)
+
+points <- biplot_scores %>% 
+  cbind(mFD_results %>% dplyr::select(site:season))
+
+ggplot(data = points, aes(x = RDA1, y = RDA2)) +
+  geom_point(aes(color = site, shape = season), size = 3) + 
+  stat_ellipse(aes(group = site, color = site),
+               linetype = "dashed", show.legend = FALSE) +
+  # geom_text_repel(data = points, aes(x = MDS1, y = MDS2, color = site, label = month)) +
+  # geom_polygon(data = hulls, aes(x = MDS1, y = MDS2, fill = site), alpha = 0.2) +
+  # annotate("text", x = Inf, y = Inf, label = paste("stress = ", S), vjust = 2, hjust = 2) +
+  # annotate("text", x = Inf, y = Inf, label = paste("k = ", K), vjust = 2, hjust = 2) +
+  theme_minimal() 
+
+## play with nmds
+FD.nmds <- metaMDS(mFD_results[8:11], distance = "euc", 
+                          autotransform = FALSE,
+                          engine = "monoMDS",
+                          k = 3,
+                          weakties = TRUE,
+                          model = "global",
+                          maxit = 400,
+                          try = 40,
+                          trymax = 100, 
+                          trace = FALSE)
+
+nmds_points <- data.frame(FD.nmds$points)
+nmds_points <- bind_cols(mFD_results[1:6], nmds_points) 
+
+ggplot(data=nmds_points,
+       aes(x=MDS1, y=MDS2)) + 
+  geom_point(size = 3) +
+  stat_ellipse(aes(group = season, color = season),
+               linetype = "dashed", show.legend = TRUE) +
+  theme(axis.line = element_blank(), 
+        axis.ticks = element_blank(),
+        axis.text =  element_blank()) +
+  theme_classic() +
+  labs(fill = "Site", shape = "Year") + 
+  # guides(fill=guide_legend(override.aes=list(color=c(depth_colors)))) +
+  # annotate("text", x = -1.2, y = 1.4, 
+  #          label = paste("Stress = ", round(nonmotile.nmds$stress, 3))) +
+  theme(text = element_text(size = 14))
+
+### temporal beta diversity ###
+library(adespatial)
+
+apr_may_mat <- fish.list$abund %>% 
+  as_tibble(rownames = "sample") %>% 
+  separate_wider_delim(sample, delim = "_", names = c("site", "ipa", "season"), cols_remove = TRUE) %>% 
+  filter(season == "Apr-May") %>% 
+  add_row(site = "EDG", ipa = "Armored") %>% 
+  add_row(site = "TUR", ipa = "Natural") %>% 
+  arrange(site, ipa) %>% 
+  mutate(across(where(is.numeric), ~replace_na(., 0))) %>% 
+  dplyr::select(!site:season) %>% 
+  decostand(method = "pa")
+
+jun_jul_mat <- fish.list$abund %>% 
+  as_tibble(rownames = "sample") %>% 
+  separate_wider_delim(sample, delim = "_", names = c("site", "ipa", "season"), cols_remove = TRUE) %>% 
+  filter(season == "Jun-Jul") %>% 
+  arrange(site, ipa) %>% 
+  dplyr::select(!site:season) %>%
+  decostand(method = "pa")
+  
+
+aug_sept_mat <- fish.list$abund %>% 
+  as_tibble(rownames = "sample") %>% 
+  separate_wider_delim(sample, delim = "_", names = c("site", "ipa", "season"), cols_remove = TRUE) %>% 
+  filter(season == "Aug-Sept") %>% 
+  add_row(site = "EDG", ipa = "Armored") %>% 
+  add_row(site = "EDG", ipa = "Natural") %>% 
+  add_row(site = "DOK", ipa = "Natural") %>% 
+  mutate(across(where(is.numeric), ~replace_na(., 0))) %>% 
+  arrange(site, ipa) %>% 
+  dplyr::select(!site:season) %>% 
+  decostand(method = "pa")
+
+step_1 <- TBI(apr_may_mat, jun_jul_mat, method = "%difference", nperm = 999, test.t.perm = TRUE)
+summary(step_1)
+step_1$BCD.mat
+
+step_2 <- TBI(jun_jul_mat, aug_sept_mat, method = "%difference", nperm = 999, test.t.perm = TRUE)
+summary(step_2)
+step_2$BCD.mat
+step_2$t.test_B.C
+
+apr_may_mat2 <- fish.list$abund %>% 
+  as_tibble(rownames = "sample") %>% 
+  separate_wider_delim(sample, delim = "_", names = c("site", "ipa", "season"), cols_remove = TRUE) %>% 
+  filter(season == "Apr-May") %>% 
+  add_row(site = "TUR", ipa = "Natural") %>% 
+  arrange(site, ipa) %>% 
+  mutate(across(where(is.numeric), ~replace_na(., 0))) %>% 
+  dplyr::select(!site:season) %>% 
+  decostand(method = "pa")
+
+aug_sept_mat2 <- fish.list$abund %>% 
+  as_tibble(rownames = "sample") %>% 
+  separate_wider_delim(sample, delim = "_", names = c("site", "ipa", "season"), cols_remove = TRUE) %>% 
+  filter(season == "Aug-Sept") %>% 
+  add_row(site = "EDG", ipa = "Natural") %>% 
+  add_row(site = "DOK", ipa = "Natural") %>% 
+  mutate(across(where(is.numeric), ~replace_na(., 0))) %>% 
+  arrange(site, ipa) %>% 
+  dplyr::select(!site:season) %>% 
+  decostand(method = "pa")
+
+step_3 <- TBI(aug_sept_mat2, apr_may_mat2, method = "%difference", nperm = 999, test.t.perm = TRUE)
+summary(step_3)
+step_3$BCD.mat
+step_3$t.test_B.C
