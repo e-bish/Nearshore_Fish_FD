@@ -275,40 +275,65 @@ mFD_results %>%
 
 #### permanova ####
 #test ipa and site
-adonis2(mFD_results[8:11] ~ ipa*site, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
-adonis2(mFD_results[8:11] ~ ipa*site - ipa:site, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
-adonis2(mFD_results[8:11] ~ ipa+site, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[8:11] ~ ipa*site*season, data = mFD_results, permutations = 9999, by = "terms", method = "euclidean")
+adonis2(mFD_results[8:11] ~ ipa*site*season - ipa:site:season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[8:11] ~ ipa+site+season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
 #site + season
 
+adonis2(mFD_results['Species_Richness'] ~ ipa*site, data = mFD_results, permutations = 9999, by = "terms", method = "euclidean")
+adonis2(mFD_results['Species_Richness'] ~ site*ipa, data = mFD_results, permutations = 9999, by = "terms", method = "euclidean")
+
 #Species_Richness
-adonis2(mFD_results[7] ~ ipa*site*season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
-adonis2(mFD_results[7] ~ ipa*site*season - ipa:site:season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
-#ipa:site and site:season
-adonis2(mFD_results[7] ~ ipa+site+season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results[7] ~ season*site*ipa, data = mFD_results, permutations = 9999, by = "terms", method = "euclidean")
+adonis2(mFD_results[7] ~ season*ipa*site, data = mFD_results, permutations = 9999, by = "terms", method = "euclidean")
+#site; order does not impact our conclusions
+
+
+# adonis2(mFD_results[7] ~ ipa*site*season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+# adonis2(mFD_results[7] ~ ipa*site*season - ipa:site:season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+# #ipa:site and site:season
+# adonis2(mFD_results[7] ~ ipa+site+season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
 #site + season
 
 #FRic
-adonis2(mFD_results[10] ~ ipa*site*season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
-adonis2(mFD_results[10] ~ ipa*site*season - ipa:site:season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
-#site:season
-adonis2(mFD_results[10] ~ ipa+site+season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results['FRic'] ~ season*site*ipa, data = mFD_results, permutations = 9999, by = "terms", method = "euclidean")
+adonis2(mFD_results['FRic'] ~ season*ipa*site, data = mFD_results, permutations = 9999, by = "terms", method = "euclidean")
+#site; order slightly affects ipa conclusions
+
+
+# adonis2(mFD_results[10] ~ ipa*site*season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+# adonis2(mFD_results[10] ~ ipa*site*season - ipa:site:season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+# #site:season
+# adonis2(mFD_results[10] ~ ipa+site+season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
 #site + season 
 
 #FEve
-adonis2(mFD_results[9] ~ ipa*site*season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
-adonis2(mFD_results[9] ~ ipa*site*season - ipa:site:season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
-adonis2(mFD_results[9] ~ ipa+site+season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results['FEve'] ~ season*site*ipa, data = mFD_results, permutations = 9999, by = "terms", method = "euclidean")
+adonis2(mFD_results['FEve'] ~ season*ipa*site, data = mFD_results, permutations = 9999, by = "terms", method = "euclidean")
+#none, order doesn't affect conclusions
+
+# adonis2(mFD_results[9] ~ ipa*site*season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+# adonis2(mFD_results[9] ~ ipa*site*season - ipa:site:season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+# adonis2(mFD_results[9] ~ ipa+site+season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
 
 #FDiv
-adonis2(mFD_results[11] ~ ipa*site*season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
-adonis2(mFD_results[11] ~ ipa*site*season - ipa:site:season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
-adonis2(mFD_results[11] ~ ipa+site+season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results['FDiv'] ~ season*site*ipa, data = mFD_results, permutations = 9999, by = "terms", method = "euclidean")
+adonis2(mFD_results['FDiv'] ~ season*ipa*site, data = mFD_results, permutations = 9999, by = "terms", method = "euclidean")
+#order doesn't affect conclusions
+
+# adonis2(mFD_results[11] ~ ipa*site*season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+# adonis2(mFD_results[11] ~ ipa*site*season - ipa:site:season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+# adonis2(mFD_results[11] ~ ipa+site+season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
 #site
 
 #FDis
-adonis2(mFD_results[8] ~ ipa*site*season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
-adonis2(mFD_results[8] ~ ipa*site*season - ipa:site:season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
-adonis2(mFD_results[8] ~ ipa+site+season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results['FDis'] ~ season*site*ipa, data = mFD_results, permutations = 9999, by = "terms", method = "euclidean")
+adonis2(mFD_results['FDis'] ~ season*ipa*site, data = mFD_results, permutations = 9999, by = "terms", method = "euclidean")
+#order doesn't affect conclusions
+
+# adonis2(mFD_results[8] ~ ipa*site*season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+# adonis2(mFD_results[8] ~ ipa*site*season - ipa:site:season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+# adonis2(mFD_results[8] ~ ipa+site+season, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
 
 #### region permanova ###
 whole_plot_shuffle <- how(within = Within(type = "none"),
@@ -324,38 +349,56 @@ adonis2(mFD_results[8:11] ~ region+veg, data = mFD_results, permutations = whole
 #region
 
 #Species_Richness
-adonis2(mFD_results['Species_Richness'] ~ region*veg, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
-adonis2(mFD_results['Species_Richness'] ~ region+veg, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
+adonis2(mFD_results['Species_Richness'] ~ region*veg, data = mFD_results, permutations = whole_plot_shuffle, by = "terms", method = "euclidean")
+adonis2(mFD_results['Species_Richness'] ~ veg*region, data = mFD_results, permutations = whole_plot_shuffle, by = "terms", method = "euclidean")
+
+
+# adonis2(mFD_results['Species_Richness'] ~ region*veg, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
+# adonis2(mFD_results['Species_Richness'] ~ region+veg, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
 
 
 #FRic
-adonis2(mFD_results['FRic'] ~ region:veg, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
-adonis2(mFD_results['FRic'] ~ region+veg, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
+adonis2(mFD_results['FRic'] ~ region*veg, data = mFD_results, permutations = whole_plot_shuffle, by = "terms", method = "euclidean")
+adonis2(mFD_results['FRic'] ~ veg*region, data = mFD_results, permutations = whole_plot_shuffle, by = "terms", method = "euclidean")
+
+# adonis2(mFD_results['FRic'] ~ region*veg, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
+# adonis2(mFD_results['FRic'] ~ region+veg, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
 
 
 #FEve
-adonis2(mFD_results[9] ~ region:veg, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
-adonis2(mFD_results['FEve'] ~ region+veg, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
+adonis2(mFD_results['FEve'] ~ region*veg, data = mFD_results, permutations = whole_plot_shuffle, by = "terms", method = "euclidean")
+adonis2(mFD_results['FEve'] ~ veg*region, data = mFD_results, permutations = whole_plot_shuffle, by = "terms", method = "euclidean")
+
+
+# adonis2(mFD_results[9] ~ region:veg, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
+# adonis2(mFD_results['FEve'] ~ region+veg, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
 
 
 #FDiv
-adonis2(mFD_results[11] ~ region:veg, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
-adonis2(mFD_results['FDiv'] ~ region+veg, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
+adonis2(mFD_results['FDiv'] ~ region*veg, data = mFD_results, permutations = whole_plot_shuffle, by = "terms", method = "euclidean")
+adonis2(mFD_results['FDiv'] ~ veg*region, data = mFD_results, permutations = whole_plot_shuffle, by = "terms", method = "euclidean")
+
+# adonis2(mFD_results[11] ~ region:veg, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
+# adonis2(mFD_results['FDiv'] ~ region+veg, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
 
 #FDis
-adonis2(mFD_results[8] ~ region:veg, data = mFD_results, permutations =whole_plot_shuffle, by = "margin", method = "euclidean")
-adonis2(mFD_results['FDis'] ~ region+veg, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
+adonis2(mFD_results['FDis'] ~ region*veg, data = mFD_results, permutations = whole_plot_shuffle, by = "terms", method = "euclidean")
+adonis2(mFD_results['FDis'] ~ veg*region, data = mFD_results, permutations = whole_plot_shuffle, by = "terms", method = "euclidean")
+
+
+# adonis2(mFD_results[8] ~ region:veg, data = mFD_results, permutations =whole_plot_shuffle, by = "margin", method = "euclidean")
+# adonis2(mFD_results['FDis'] ~ region+veg, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")
 
 
 ########## compare sites
-# ipa_shuffle <- how(within = Within(type = "free"),
-#                       plots = Plots(strata = mFD_results$ipa, type = "none"),
-#                       nperm = 9999)
-# 
-# mod <- rda(mFD_results['FRic'] ~ site + Condition(ipa), data = mFD_results)
-# plot(mod)
-# summary(mod, display = NULL)
-# res <- anova(mod, permutations = ipa_shuffle, by = "margin")
+ipa_shuffle <- how(within = Within(type = "free"),
+                      plots = Plots(strata = mFD_results$ipa, type = "none"),
+                      nperm = 9999)
+
+mod <- rda(mFD_results['Species_Richness'] ~ site + Condition(ipa), data = mFD_results)
+plot(mod)
+summary(mod, display = NULL)
+res <- anova(mod, permutations = ipa_shuffle, by = "margin")
 
 #### feeling good about this ####
 season_shuffle <- how(within = Within(type = "none"),
@@ -367,6 +410,21 @@ season_shuffle <- how(within = Within(type = "none"),
 #condition removes the between block variation 
 mod <- rda(mFD_results[8:11] ~ season + Condition(shoreline), data = mFD_results) 
 summary(mod)
+anova(mod, permutations = season_shuffle, by = "margin")
+
+mod <- rda(mFD_results['Species_Richness'] ~ season + Condition(shoreline), data = mFD_results) 
+anova(mod, permutations = season_shuffle, by = "margin")
+
+mod <- rda(mFD_results['FRic'] ~ season + Condition(shoreline), data = mFD_results) 
+anova(mod, permutations = season_shuffle, by = "margin")
+
+mod <- rda(mFD_results['FEve'] ~ season + Condition(shoreline), data = mFD_results) 
+anova(mod, permutations = season_shuffle, by = "margin")
+
+mod <- rda(mFD_results['FDiv'] ~ season + Condition(shoreline), data = mFD_results) 
+anova(mod, permutations = season_shuffle, by = "margin")
+
+mod <- rda(mFD_results['FDis'] ~ season + Condition(shoreline), data = mFD_results) 
 anova(mod, permutations = season_shuffle, by = "margin")
 
 ####

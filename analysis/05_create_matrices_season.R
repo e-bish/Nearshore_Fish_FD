@@ -97,7 +97,7 @@ fish_L_partial <- net_core %>% #L is referring to the RLQ analysis
   filter(!is.na(ComName)) %>% #these are accounted for in the next step
   full_join(expand_species) %>% #add back in all of the events so we can capture 0s
   mutate(ComName = replace(ComName, ComName == "Pacific Sandfish", "Pacific sandfish")) %>% #if it's capitolized it gets confused about the proper order
-  arrange(year, month, site, ipa, ComName) %>% 
+  arrange(season, month, site, ipa, ComName) %>% 
   mutate(catch_per_set  = replace_na(catch_per_set , 0))
 
 fish_L_full <- fish_L_partial %>% 

@@ -15,12 +15,12 @@ set.seed(2025)
 
 load(here("data", "fish.list.Rdata"))
 
-fish.list$trait <- fish.list$trait %>%
-  select(!migrations)
+# fish.list$trait <- fish.list$trait %>%
+#   select(!migrations)
 
 #### run with mFD ####
 traits_cat <- data.frame(trait_name = colnames(fish.list$trait),
-                         trait_type = c("Q", "N", "N", "N"))
+                         trait_type = c("Q", "N", "N", "N", "N"))
 
 #Species trait summary
 traits_summary <- sp.tr.summary(tr_cat = traits_cat, 
@@ -83,7 +83,7 @@ add_small_samples_back <- rows_w_few_spp %>%
   select(site, ipa, year, Species_Richness)
 
 mFD_results <- mFD_values %>%
-  select(!6:8) %>% 
+  dplyr::select(!6:8) %>% 
   as_tibble(rownames = "sample") %>% 
   separate_wider_delim(sample, delim = "_", names = c("site", "ipa", "year"), cols_remove = TRUE) %>% 
   full_join(add_small_samples_back) %>% 
@@ -95,7 +95,8 @@ mFD_results <- mFD_values %>%
                                             ipa == "Natural2" ~ "N2",
                                             TRUE ~ "N")),
          across(where(is.numeric), ~replace_na(., 0))) %>% 
-  mutate(ipa = ifelse(ipa == "Natural2", "Natural", ipa)) 
+  mutate(ipa = ifelse(ipa == "Natural2", "Natural", ipa)) %>% 
+  arrange(shoreline, year)
 
 # save(mFD_results, file = here("data","mFD_results.Rdata")) #last saved 5/27/25 without migrations
 load(here("data","mFD_results.Rdata"))
@@ -309,19 +310,33 @@ mFD_results %>%
 
 #### permanova ####
 
+plot_shuffle <- how(within = Within(type = "series"),
+                          plots = Plots(strata = mFD_results$shoreline, type = "free"),
+                          nperm = 9999)
+
 adonis2(mFD_results[8:11] ~ ipa*site*year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
 adonis2(mFD_results[8:11] ~ ipa*site*year - ipa:site:year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
 adonis2(mFD_results[8:11] ~ ipa+site+year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
 #site
 
 #Species_Richness
+adonis2(mFD_results['Species_Richness'] ~ ipa*site, data = mFD_results, permutations = plot_shuffle, by = "margin", method = "euclidean")
+adonis2(mFD_results['Species_Richness'] ~ ipa+site, data = mFD_results, permutations = plot_shuffle, by = "margin", method = "euclidean")
+
+
 adonis2(mFD_results[7] ~ ipa*site*year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
-adonis2(mFD_results[7] ~ ipa*site*year - ipa:site:year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results['Species_Richness'] ~ ipa*site*year - ipa:site:year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
 #ipa:site
-adonis2(mFD_results[7] ~ ipa+site+year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
+adonis2(mFD_results['Species_Richness'] ~ ipa+site+year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
 #site + year
 
 #FRic
+adonis2(mFD_results['FRic'] ~ ipa*site, data = mFD_results, permutations = plot_shuffle, by = "margin", method = "euclidean")
+adonis2(mFD_results['FRic'] ~ ipa+site, data = mFD_results, permutations = plot_shuffle, by = "margin", method = "euclidean")
+
+
+
+
 adonis2(mFD_results[10] ~ ipa*site*year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
 #significant with migrations
 adonis2(mFD_results[10] ~ ipa*site*year - ipa:site:year, data = mFD_results, permutations = 9999, by = "margin", method = "euclidean")
