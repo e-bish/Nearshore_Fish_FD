@@ -8,6 +8,7 @@ library(mFD)
 library(ggordiplots)
 library(patchwork)
 library(FD)
+library(pairwiseAdonis)
 
 #### Start here for FD analysis ####
 
@@ -95,9 +96,10 @@ mFD_results <- mFD_values %>%
                                             TRUE ~ "N")),
          season = factor(season, levels = c("Apr-May", "Jun-Jul", "Aug-Sept")),
          across(where(is.numeric), ~replace_na(., 0))) %>% 
-  mutate(ipa = ifelse(ipa == "Natural2", "Natural", ipa)) 
+  mutate(ipa = ifelse(ipa == "Natural2", "Natural", ipa)) %>% 
+  arrange(shoreline, season)
 
-# save(mFD_results, file = here("data","mFD_results_season.Rdata")) #last saved 5/27/25
+# save(mFD_results, file = here("data","mFD_results_season.Rdata")) #last saved 6/2/25
 load(here("data","mFD_results_season.Rdata"))
 
 #plot with full range
@@ -290,10 +292,7 @@ adonis2(mFD_results['Species_Richness'] ~ ipa+site, data = mFD_results, permutat
 #site
 
 pairwise.adonis2(mFD_results['Species_Richness'] ~ site, data = mFD_results, permutations = 999, by = "margin", method = "euclidean")
-# (below groups need to be double checked)
-#A: COR
-#B: DOK, FAM, SHR, TUR
-#C: DOK, EDG, FAM, SHR
+#Cornet v every other site 
 
 # dispersion
 SR_dist <- vegdist(mFD_results['Species_Richness'], method = "euclidean")
@@ -310,9 +309,8 @@ SR.site.disp <- betadisper(SR_dist, mFD_results$site, type = c("median"), bias.a
 boxplot(SR.site.disp)
 permutest(SR.site.disp, pairwise = TRUE, permutations = plot_shuffle)
 # (below groups need to be double checked)
-#A: TUR, FAM, SHR, EDG
-#B: COR, TUR
-#C: FAM, DOK, SHR, EDG
+#A: TUR, FAM, SHR, EDG,DOK
+#B: COR, TUR, EDG, SHR, FAM
 
 ## FRic
 adonis2(mFD_results['FRic'] ~ ipa*site, data = mFD_results, permutations = plot_shuffle, by = "margin", method = "euclidean")
@@ -321,9 +319,7 @@ adonis2(mFD_results['FRic'] ~ ipa+site, data = mFD_results, permutations = plot_
 
 pairwise.adonis2(mFD_results['FRic'] ~ site, data = mFD_results, permutations = 999, by = "margin", method = "euclidean")
 # check below groupings
-#A: COR
-#B: DOK, EDG, TUR
-#C: EDG, FAM, TUR, SHR
+
 
 #dispersion
 FRic_dist <- vegdist(mFD_results['FRic'], method = "euclidean")
@@ -503,7 +499,7 @@ boxplot(FDis.veg.disp)
 permutest(FDis.veg.disp, pairwise = TRUE, permutations = plot_shuffle)
 
 ## Seasonal test
-season_shuffle <- how(within = Within(type = "free"),
+season_shuffle <- how(within = Within(type = "series"), #results don't change with by = "free"
                           plots = Plots(strata = mFD_results$shoreline, type = "none"),
                           nperm = 9999)
 
@@ -512,9 +508,11 @@ season_shuffle <- how(within = Within(type = "free"),
 
 mod <- rda(mFD_results['Species_Richness'] ~ season + Condition(shoreline), data = mFD_results)
 anova(mod, permutations = season_shuffle, by = "margin")
+#season
 
 mod <- rda(mFD_results['FRic'] ~ season + Condition(shoreline), data = mFD_results)
 anova(mod, permutations = season_shuffle, by = "margin")
+#season
 
 mod <- rda(mFD_results['FEve'] ~ season + Condition(shoreline), data = mFD_results)
 anova(mod, permutations = season_shuffle, by = "margin")
