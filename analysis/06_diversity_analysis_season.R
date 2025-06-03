@@ -736,71 +736,71 @@ anova(mod, permutations = season_shuffle, by = "margin")
 #   theme(text = element_text(size = 14))
 # 
 # ### temporal beta diversity ###
-# library(adespatial)
-# 
-# apr_may_mat <- fish.list$abund %>% 
-#   as_tibble(rownames = "sample") %>% 
-#   separate_wider_delim(sample, delim = "_", names = c("site", "ipa", "season"), cols_remove = TRUE) %>% 
-#   filter(season == "Apr-May") %>% 
-#   add_row(site = "EDG", ipa = "Armored") %>% 
-#   add_row(site = "TUR", ipa = "Natural") %>% 
-#   arrange(site, ipa) %>% 
-#   mutate(across(where(is.numeric), ~replace_na(., 0))) %>% 
-#   dplyr::select(!site:season) %>% 
-#   decostand(method = "pa")
-# 
-# jun_jul_mat <- fish.list$abund %>% 
-#   as_tibble(rownames = "sample") %>% 
-#   separate_wider_delim(sample, delim = "_", names = c("site", "ipa", "season"), cols_remove = TRUE) %>% 
-#   filter(season == "Jun-Jul") %>% 
-#   arrange(site, ipa) %>% 
-#   dplyr::select(!site:season) %>%
-#   decostand(method = "pa")
-#   
-# 
-# aug_sept_mat <- fish.list$abund %>% 
-#   as_tibble(rownames = "sample") %>% 
-#   separate_wider_delim(sample, delim = "_", names = c("site", "ipa", "season"), cols_remove = TRUE) %>% 
-#   filter(season == "Aug-Sept") %>% 
-#   add_row(site = "EDG", ipa = "Armored") %>% 
-#   add_row(site = "EDG", ipa = "Natural") %>% 
-#   add_row(site = "DOK", ipa = "Natural") %>% 
-#   mutate(across(where(is.numeric), ~replace_na(., 0))) %>% 
-#   arrange(site, ipa) %>% 
-#   dplyr::select(!site:season) %>% 
-#   decostand(method = "pa")
-# 
-# step_1 <- TBI(apr_may_mat, jun_jul_mat, method = "%difference", nperm = 999, test.t.perm = TRUE)
-# summary(step_1)
-# step_1$BCD.mat
-# 
-# step_2 <- TBI(jun_jul_mat, aug_sept_mat, method = "%difference", nperm = 999, test.t.perm = TRUE)
-# summary(step_2)
-# step_2$BCD.mat
-# step_2$t.test_B.C
-# 
-# apr_may_mat2 <- fish.list$abund %>% 
-#   as_tibble(rownames = "sample") %>% 
-#   separate_wider_delim(sample, delim = "_", names = c("site", "ipa", "season"), cols_remove = TRUE) %>% 
-#   filter(season == "Apr-May") %>% 
-#   add_row(site = "TUR", ipa = "Natural") %>% 
-#   arrange(site, ipa) %>% 
-#   mutate(across(where(is.numeric), ~replace_na(., 0))) %>% 
-#   dplyr::select(!site:season) %>% 
-#   decostand(method = "pa")
-# 
-# aug_sept_mat2 <- fish.list$abund %>% 
-#   as_tibble(rownames = "sample") %>% 
-#   separate_wider_delim(sample, delim = "_", names = c("site", "ipa", "season"), cols_remove = TRUE) %>% 
-#   filter(season == "Aug-Sept") %>% 
-#   add_row(site = "EDG", ipa = "Natural") %>% 
-#   add_row(site = "DOK", ipa = "Natural") %>% 
-#   mutate(across(where(is.numeric), ~replace_na(., 0))) %>% 
-#   arrange(site, ipa) %>% 
-#   dplyr::select(!site:season) %>% 
-#   decostand(method = "pa")
-# 
-# step_3 <- TBI(aug_sept_mat2, apr_may_mat2, method = "%difference", nperm = 999, test.t.perm = TRUE)
-# summary(step_3)
-# step_3$BCD.mat
-# step_3$t.test_B.C
+library(adespatial)
+
+apr_may_mat <- fish.list$abund %>%
+  as_tibble(rownames = "sample") %>%
+  separate_wider_delim(sample, delim = "_", names = c("site", "ipa", "season"), cols_remove = TRUE) %>%
+  filter(season == "Apr-May") %>%
+  add_row(site = "EDG", ipa = "Armored") %>%
+  add_row(site = "TUR", ipa = "Natural") %>%
+  arrange(site, ipa) %>%
+  mutate(across(where(is.numeric), ~replace_na(., 0))) %>%
+  dplyr::select(!site:season) %>%
+  decostand(method = "pa")
+
+jun_jul_mat <- fish.list$abund %>%
+  as_tibble(rownames = "sample") %>%
+  separate_wider_delim(sample, delim = "_", names = c("site", "ipa", "season"), cols_remove = TRUE) %>%
+  filter(season == "Jun-Jul") %>%
+  arrange(site, ipa) %>%
+  dplyr::select(!site:season) %>%
+  decostand(method = "pa")
+
+
+aug_sept_mat <- fish.list$abund %>%
+  as_tibble(rownames = "sample") %>%
+  separate_wider_delim(sample, delim = "_", names = c("site", "ipa", "season"), cols_remove = TRUE) %>%
+  filter(season == "Aug-Sept") %>%
+  add_row(site = "EDG", ipa = "Armored") %>%
+  add_row(site = "EDG", ipa = "Natural") %>%
+  add_row(site = "DOK", ipa = "Natural") %>%
+  mutate(across(where(is.numeric), ~replace_na(., 0))) %>%
+  arrange(site, ipa) %>%
+  dplyr::select(!site:season) %>%
+  decostand(method = "pa")
+
+step_1 <- TBI(apr_may_mat, jun_jul_mat, method = "%difference", nperm = 999, test.t.perm = TRUE)
+summary(step_1)
+step_1$BCD.mat
+
+step_2 <- TBI(jun_jul_mat, aug_sept_mat, method = "%difference", nperm = 999, test.t.perm = TRUE)
+summary(step_2)
+step_2$BCD.mat
+step_2$t.test_B.C
+
+apr_may_mat2 <- fish.list$abund %>%
+  as_tibble(rownames = "sample") %>%
+  separate_wider_delim(sample, delim = "_", names = c("site", "ipa", "season"), cols_remove = TRUE) %>%
+  filter(season == "Apr-May") %>%
+  add_row(site = "TUR", ipa = "Natural") %>%
+  arrange(site, ipa) %>%
+  mutate(across(where(is.numeric), ~replace_na(., 0))) %>%
+  dplyr::select(!site:season) %>%
+  decostand(method = "pa")
+
+aug_sept_mat2 <- fish.list$abund %>%
+  as_tibble(rownames = "sample") %>%
+  separate_wider_delim(sample, delim = "_", names = c("site", "ipa", "season"), cols_remove = TRUE) %>%
+  filter(season == "Aug-Sept") %>%
+  add_row(site = "EDG", ipa = "Natural") %>%
+  add_row(site = "DOK", ipa = "Natural") %>%
+  mutate(across(where(is.numeric), ~replace_na(., 0))) %>%
+  arrange(site, ipa) %>%
+  dplyr::select(!site:season) %>%
+  decostand(method = "pa")
+
+step_3 <- TBI(aug_sept_mat2, apr_may_mat2, method = "%difference", nperm = 999, test.t.perm = TRUE)
+summary(step_3)
+step_3$BCD.mat
+step_3$t.test_B.C
