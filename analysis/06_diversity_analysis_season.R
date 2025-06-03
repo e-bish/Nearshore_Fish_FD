@@ -11,6 +11,7 @@ library(FD)
 library(pairwiseAdonis)
 
 #### Start here for FD analysis ####
+set.seed(2025)
 
 load(here("data", "fish.list.season.Rdata"))
 
@@ -286,13 +287,57 @@ head(mFD_results[, c("site", "ipa", "season")], 15)
 check(mFD_results, control =plot_shuffle)
 head(mFD_results[shuffle(nrow(mFD_results), control = plot_shuffle), c("site", "ipa", "season")], 15)
 
+#test interactions first 
+calc_int.plot_permanova <- function(metric) {
+  result <- adonis2(mFD_results[metric] ~ ipa*site*season - ipa:site:season, 
+                    data = mFD_results, 
+                    permutations = plot_shuffle, 
+                    by = "margin", 
+                    method = "euclidean")
+  
+  colnames(result) <- paste(colnames(result), metric, sep = '_')
+  
+  output <- as.data.frame(result)
+  
+  return(output)
+}
+
+
+int.plot_permanova_list <- map(metrics, calc_int.plot_permanova)
+int.plot_permanova_df <- list_cbind(int.plot_permanova_list, name_repair = "minimal")
+int.plot_permanova_df <- int.plot_permanova_df %>% 
+  rownames_to_column(var = "X")
+
+#test single factors 
+calc_plot_permanova <- function(metric) {
+  result <- adonis2(mFD_results[metric] ~ ipa+site+season, 
+                    data = mFD_results, 
+                    permutations = plot_shuffle, 
+                    by = "margin", 
+                    method = "euclidean")
+  
+  colnames(result) <- paste(colnames(result), metric, sep = '_')
+  
+  output <- as.data.frame(result) 
+  
+  return(output)
+}
+
+plot_permanova_list <- map(metrics, calc_plot_permanova)
+plot_permanova_df <- list_cbind(plot_permanova_list, name_repair = "minimal") 
+plot_permanova_df <- plot_permanova_df %>% 
+  rownames_to_column(var = "X")
+#SR, FRic, FDiv
+
 ## Species_Richness
-adonis2(mFD_results['Species_Richness'] ~ ipa*site, data = mFD_results, permutations = plot_shuffle, by = "margin", method = "euclidean")
-adonis2(mFD_results['Species_Richness'] ~ ipa+site, data = mFD_results, permutations = plot_shuffle, by = "margin", method = "euclidean")
-#site
 
 pairwise.adonis2(mFD_results['Species_Richness'] ~ site, data = mFD_results, permutations = 999, by = "margin", method = "euclidean")
 #Cornet v every other site 
+
+pairwise.adonis2(mFD_results['FDiv'] ~ site, data = mFD_results, 
+                 permutations = 999,
+                 by = "margin", method = "euclidean")
+
 
 # dispersion
 SR_dist <- vegdist(mFD_results['Species_Richness'], method = "euclidean")
@@ -313,10 +358,6 @@ permutest(SR.site.disp, pairwise = TRUE, permutations = plot_shuffle)
 #B: COR, TUR, EDG, SHR, FAM
 
 ## FRic
-adonis2(mFD_results['FRic'] ~ ipa*site, data = mFD_results, permutations = plot_shuffle, by = "margin", method = "euclidean")
-adonis2(mFD_results['FRic'] ~ ipa+site, data = mFD_results, permutations = plot_shuffle, by = "margin", method = "euclidean")
-#site
-
 pairwise.adonis2(mFD_results['FRic'] ~ site, data = mFD_results, permutations = 999, by = "margin", method = "euclidean")
 # check below groupings
 
@@ -342,10 +383,6 @@ permutest(FRic.site.disp, pairwise = TRUE, permutations = plot_shuffle)
 #D: TUR, DOK, EDG
 
 ## FEve
-adonis2(mFD_results['FEve'] ~ ipa*site, data = mFD_results, permutations = plot_shuffle, by = "margin", method = "euclidean")
-adonis2(mFD_results['FEve'] ~ ipa+site, data = mFD_results, permutations = plot_shuffle, by = "margin", method = "euclidean")
-
-
 FEve_dist <- vegdist(mFD_results['FEve'], method = "euclidean")
 
 FEve.ipa.disp <- betadisper(FEve_dist, mFD_results$ipa, type = c("median"), bias.adjust = FALSE,
@@ -362,10 +399,6 @@ permutest(FEve.site.disp, pairwise = TRUE, permutations = plot_shuffle)
 #COR different from EDG
 
 ## FDiv
-adonis2(mFD_results['FDiv'] ~ ipa*site, data = mFD_results, permutations = plot_shuffle, by = "margin", method = "euclidean")
-adonis2(mFD_results['FDiv'] ~ ipa+site, data = mFD_results, permutations = plot_shuffle, by = "margin", method = "euclidean")
-#site 
-
 FDiv_dist <- vegdist(mFD_results['FDiv'], method = "euclidean")
 
 FDiv.ipa.disp <- betadisper(FDiv_dist, mFD_results$ipa, type = c("median"), bias.adjust = FALSE,
@@ -383,9 +416,6 @@ permutest(FDiv.site.disp, pairwise = TRUE, permutations = plot_shuffle)
 #B: COR, TUR, SHR, EDG
 
 ## FDis
-adonis2(mFD_results['FDis'] ~ ipa*site, data = mFD_results, permutations = plot_shuffle, by = "margin", method = "euclidean")
-adonis2(mFD_results['FDis'] ~ ipa+site, data = mFD_results, permutations = plot_shuffle, by = "margin", method = "euclidean")
-
 FDis_dist <- vegdist(mFD_results['FDis'], method = "euclidean")
 
 FDis.ipa.disp <- betadisper(FDis_dist, mFD_results$ipa, type = c("median"), bias.adjust = FALSE,
@@ -410,6 +440,47 @@ whole_plot_shuffle <- how(within = Within(type = "none"),
 head(mFD_results[, c("site", "ipa", "season")], 15)
 check(mFD_results, control =whole_plot_shuffle)
 head(mFD_results[shuffle(nrow(mFD_results), control = whole_plot_shuffle), c("site", "ipa", "season")], 15)
+
+
+calc_int.whole_permanova <- function(metric) {
+  result <- adonis2(mFD_results[metric] ~ region*veg, 
+                    data = mFD_results, 
+                    permutations = whole_plot_shuffle, 
+                    by = "margin", 
+                    method = "euclidean")
+  
+  colnames(result) <- paste(colnames(result), metric, sep = '_')
+  
+  output <- as.data.frame(result)
+  
+  return(output)
+}
+
+
+int.whole_permanova_list <- map(metrics, calc_int.whole_permanova)
+int.whole_permanova_df <- list_cbind(int.whole_permanova_list, name_repair = "minimal")
+int.whole_permanova_df <- int.whole_permanova_df %>% 
+  rownames_to_column(var = "X")
+
+#test single factors 
+calc_whole_permanova <- function(metric) {
+  result <- adonis2(mFD_results[metric] ~ region + veg, 
+                    data = mFD_results, 
+                    permutations = whole_plot_shuffle, 
+                    by = "margin", 
+                    method = "euclidean")
+  
+  colnames(result) <- paste(colnames(result), metric, sep = '_')
+  
+  output <- as.data.frame(result) 
+  
+  return(output)
+}
+
+whole_permanova_list <- map(metrics, calc_whole_permanova)
+whole_permanova_df <- list_cbind(whole_permanova_list, name_repair = "minimal")
+whole_permanova_df <- whole_permanova_df %>% 
+  rownames_to_column(var = "X")
 
 #Species_Richness
 adonis2(mFD_results['Species_Richness'] ~ region*veg, data = mFD_results, permutations = whole_plot_shuffle, by = "margin", method = "euclidean")

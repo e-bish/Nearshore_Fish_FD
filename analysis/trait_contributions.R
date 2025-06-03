@@ -44,7 +44,7 @@ minus_length <- calculate_FD(fish.list$trait[,-1], c("N", "N", "N", "N"))
 minus_body <- calculate_FD(fish.list$trait[,-2], c("Q", "N", "N", "N"))
 minus_pos <- calculate_FD(fish.list$trait[,-3], c("Q", "N", "N", "N"))
 minus_mig <- calculate_FD(fish.list$trait[,-4], c("Q", "N", "N", "N"))
-minus_fd <- calculate_FD(fish.list$trait[,-5], c("Q", "N", "N", "N"))
+minus_fg <- calculate_FD(fish.list$trait[,-5], c("Q", "N", "N", "N"))
 
 mods <- c("minus_length", "minus_body", "minus_pos", "minus_mig", "minus_fd")
 
@@ -65,8 +65,26 @@ extract_R2_tab <- function(metric){
   return(rsq_df)
 }
 
-fric_df <- extract_R2_tab("fric") %>% arrange(fric_rsq)
-feve_df <- extract_R2_tab("feve") %>% arrange(feve_rsq)
-fdiv_df <- extract_R2_tab("fdiv") %>% arrange(fdiv_rsq)
-fdis_df <- extract_R2_tab("fdis") %>% arrange(fdis_rsq)
+metrics_short <- c("fric", "feve", "fdiv", "fdis")
 
+combine_R2_tabs <- function(metric) {
+  
+    tmp <- extract_R2_tab(metric) %>% 
+      as_tibble() %>% 
+      mutate(contribution = 1 - .[[2]]) %>% 
+      mutate_if(is.numeric, round, 2) %>% 
+      rename_with(~paste(metric, "cont", sep = "_"), starts_with("contribution"))
+  
+  return(tmp)
+}
+
+combined_df <- map_dfc(metrics_short, combine_R2_tabs) %>% 
+  rename(trait = "mod...1") %>% 
+  select(-contains("mod")) %>% 
+  mutate(trait = c("Body length",
+                   "Body transverse shape",
+                   "Vertical distribution",
+                   "Migrations",
+                   "Feeding guild"))
+
+write_csv(combined_df, here("data", "rsq_contributions.csv"))

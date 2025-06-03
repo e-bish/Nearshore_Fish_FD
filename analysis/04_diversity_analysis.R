@@ -246,7 +246,7 @@ free(p1) + guide_area() + p2 +
 #### FD by site ####
 mFD_results %>% 
   pivot_longer(!c(site, ipa, year, shoreline, region, veg), names_to = "metric", values_to = "value") %>% 
-  ggplot(aes(x = site, y = value)) +
+  ggplot(aes(x = site, y = value, fill = site)) +
   geom_boxplot() +
   geom_point(show.legend = FALSE) +
   theme_classic() +
@@ -254,6 +254,7 @@ mFD_results %>%
                      labels = c("Species Richness", "FDis", "FRic", "FEve", "FDiv")),
              scales = "free_y") + 
   labs(x = "Site", y = "Value") + 
+  scale_fill_manual(values = site_colors) +
   theme(strip.background = element_rect(fill = NA, colour = NA))
 
 
@@ -262,12 +263,13 @@ mFD_results %>%
   pivot_longer(!c(site, ipa, year, shoreline, region, veg), names_to = "metric", values_to = "value") %>% 
   ggplot(aes(x = ipa, y = value)) +
   geom_boxplot() +
-  geom_point(show.legend = FALSE) +
+  geom_point(aes(color = site)) +
   theme_classic() +
   facet_wrap(~factor(metric, levels = c("Species_Richness", "FDis", "FRic", "FEve", "FDiv"),
                      labels = c("Species Richness", "FDis", "FRic", "FEve", "FDiv")),
              scales = "free_y") + 
   labs(x = "Condition category", y = "Value") + 
+  scale_color_manual(values = site_colors) +
   theme(strip.background = element_rect(fill = NA, colour = NA))
 # 
 # ggsave(here("figures", "figure_S2.png"), 
@@ -278,11 +280,12 @@ mFD_results %>%
   pivot_longer(!c(site, ipa, year, shoreline, region, veg), names_to = "metric", values_to = "value") %>% 
   ggplot(aes(x = region, y = value)) +
   geom_boxplot() +
-  geom_point(show.legend = FALSE) +
+  geom_point(aes(color = site)) +
   theme_classic() +
   facet_wrap(~factor(metric, levels = c("Species_Richness", "FDis", "FRic", "FEve", "FDiv"),
                      labels = c("Species Richness", "FDis", "FRic", "FEve", "FDiv")),
              scales = "free_y") + 
+  scale_color_manual(values = site_colors) +
   labs(x = "Region", y = "Value") + 
   theme(strip.background = element_rect(fill = NA, colour = NA))
 
@@ -291,11 +294,12 @@ mFD_results %>%
   pivot_longer(!c(site, ipa, year, shoreline, region, veg), names_to = "metric", values_to = "value") %>% 
   ggplot(aes(x = veg, y = value)) +
   geom_boxplot() +
-  geom_point(show.legend = FALSE) +
+  geom_point(aes(color = site)) +
   theme_classic() +
   facet_wrap(~factor(metric, levels = c("Species_Richness", "FDis", "FRic", "FEve", "FDiv"),
                      labels = c("Species Richness", "FDis", "FRic", "FEve", "FDiv")),
              scales = "free_y") + 
+  scale_color_manual(values = site_colors) +
   labs(x = "Eelgrass", y = "Value") + 
   theme(strip.background = element_rect(fill = NA, colour = NA))
 
@@ -382,13 +386,114 @@ pairwise.adonis2(mFD_results['FRic'] ~ site, data = mFD_results, permutations = 
 #C: EDG, FAM, TUR, SHR
 
 # SR dispersion
+library(patchwork)
+
+compare_dispersion <- function(metric, scale) {
+  
+  dist <- vegdist(mFD_results[[metric]], method = "euclidean")
+  
+  disp <- betadisper(dist, mFD_results[[scale]], type = c("median"), bias.adjust = FALSE,
+                     sqrt.dist = FALSE, add = FALSE)
+  
+  output <- as.data.frame(disp$distances)
+  
+  names(output) <- metric
+  
+  return(output)
+  
+}
+
+ipa_dispersions <- mFD_results %>% 
+  select(site:year) %>% 
+  cbind(map2_dfc(metrics, "ipa", compare_dispersion)) %>% 
+  pivot_longer(cols = !site:year, names_to = "metric")
+
+ggplot(data = ipa_dispersions) +
+  geom_boxplot(aes(x = ipa, y = value)) +
+  theme_classic() + 
+  facet_wrap(~metric)
+
+site_dispersions <- mFD_results %>% 
+  select(site:year) %>% 
+  cbind(map2_dfc(metrics, "site", compare_dispersion)) %>% 
+  pivot_longer(cols = !site:year, names_to = "metric") %>% 
+  mutate(metric = factor(metric, levels = metrics))
+
+site_full <- ggplot(data = site_dispersions) +
+  geom_boxplot(aes(x = site, y = value)) +
+  theme_classic() + 
+  labs(y = "Dispersion", title = "Full") +
+  facet_wrap(~metric, ncol = 1, scales = "free")
+
+
+compare_sub_dispersion <- function(metric, scale) {
+  
+  dist <- vegdist(mFD_sub[[metric]], method = "euclidean")
+  
+  disp <- betadisper(dist, mFD_sub[[scale]], type = c("median"), bias.adjust = FALSE,
+                     sqrt.dist = FALSE, add = FALSE)
+  
+  output <- as.data.frame(disp$distances)
+  
+  names(output) <- metric
+  
+  return(output)
+  
+}
+
+site_sub_dispersions <- mFD_sub %>% 
+  select(site:year) %>% 
+  cbind(map2_dfc(metrics, "site", compare_sub_dispersion)) %>% 
+  pivot_longer(cols = !site:year, names_to = "metric") %>% 
+  mutate(metric = factor(metric, levels = metrics))
+
+site_sub <- ggplot(data = site_sub_dispersions) +
+  geom_boxplot(aes(x = site, y = value)) +
+  theme_classic() + 
+  labs(y = "Dispersion", title = "Sub") +
+  facet_wrap(~metric, ncol = 1, scales = "free")
+
+site_full + site_sub + plot_layout(axis_titles = "collect")
+
+compare_disp_pval <- function(metric, scale, shuffle) {
+  
+  dist <- vegdist(mFD_results[[metric]], method = "euclidean")
+  
+  disp <- betadisper(dist, mFD_results[[scale]], type = c("median"), bias.adjust = FALSE,
+                     sqrt.dist = FALSE, add = FALSE)
+  
+  permu <- permutest(disp, pairwise = TRUE, permutations = shuffle)
+  
+  pvals <- as.data.frame(permu[["pairwise"]]["permuted"]) %>% 
+    rownames_to_column(var = "pair")
+  
+  names(pvals)[2] <- metric
+  
+  return(pvals)
+  
+}
+
+ipa_arg_list <- list(metrics, rep("ipa", times = 5), rep(list(plot_shuffle), times = 5))
+
+ipa_disp_pvals <- pmap_dfc(ipa_arg_list, compare_disp_pval) %>% 
+  rename(pairs = "pair...1") %>% 
+  select(!contains("..."))
+
+
+site_arg_list <- list(metrics, rep("site", times = 5), rep(list(plot_shuffle), times = 5))
+
+site_disp_pvals <- pmap_dfc(site_arg_list, compare_disp_pval) %>% 
+  rename(pairs = "pair...1") %>% 
+  select(!contains("..."))
+
+#### old code ####
 SR_dist <- vegdist(mFD_results['Species_Richness'], method = "euclidean")
 
 SR.ipa.disp <- betadisper(SR_dist, mFD_results$ipa, type = c("median"), bias.adjust = FALSE,
                           sqrt.dist = FALSE, add = FALSE)
 
 boxplot(SR.ipa.disp)
-permutest(SR.ipa.disp, pairwise = TRUE, permutations = plot_shuffle)
+test <- permutest(SR.ipa.disp, pairwise = TRUE, permutations = plot_shuffle)
 
 SR.site.disp <- betadisper(SR_dist, mFD_results$site, type = c("median"), bias.adjust = FALSE,
                           sqrt.dist = FALSE, add = FALSE)
@@ -417,6 +522,22 @@ permutest(FRic.site.disp, pairwise = TRUE, permutations = plot_shuffle)
 #B: COR
 #C: SHR, FAM, TUR
 #D: TUR, DOK, EDG
+
+### test without sites that have zeros ###
+mFD_sub <- mFD_results %>% 
+  filter(!Species_Richness < 4)
+
+sub.plot_shuffle <- how(within = Within(type = "series"),
+                    plots = Plots(strata = mFD_sub$shoreline, type = "free"),
+                    nperm = 9999)
+
+FRic.sub_dist <- vegdist(mFD_sub['FRic'], method = "euclidean")
+
+FRic.sub.disp <- betadisper(FRic.sub_dist, mFD_sub$site, type = c("median"), bias.adjust = FALSE,
+                             sqrt.dist = FALSE, add = FALSE)
+
+boxplot(FRic.sub.disp)
+#can't test with permutations because the design is no longer balanced, but it looks like patterns are largely the same
 
 ## FEve dispersion
 FEve_dist <- vegdist(mFD_results['FEve'], method = "euclidean")
@@ -468,26 +589,43 @@ permutest(FDis.site.disp, pairwise = TRUE, permutations = plot_shuffle)
 #no differences
 
 #### rda for site ####
-mod <- rda(mFD_results[8:11] ~ ipa + site + year, data = mFD_results)
-plot(mod)
 
-rda_scores <- scores(mod)
-sites_scores <- as.data.frame(rda_scores[[1]])
-biplot_scores <- as.data.frame(rda_scores[[2]])
+mod1 <- rda(mFD_results['FDiv'] ~ ipa + site + year, data = mFD_results)
+mod2 <- rda(mFD_sub['FDiv'] ~ ipa + site + year, data = mFD_sub)
+plot(mod1)
+plot(mod2)
 
-RDA_ordiplot <- gg_ordiplot(ord = biplot_scores, #for some reason the scale gets weird if you don't specify this
+rda_scores1 <- scores(mod1)
+sites_scores1 <- as.data.frame(rda_scores1[[1]])
+biplot_scores1 <- as.data.frame(rda_scores1[[2]])
+
+rda_scores2 <- scores(mod2)
+sites_scores2 <- as.data.frame(rda_scores2[[1]])
+biplot_scores2 <- as.data.frame(rda_scores2[[2]])
+
+gg_ordiplot(ord = biplot_scores1, #for some reason the scale gets weird if you don't specify this
                               groups = mFD_results$site,
                               ellipse = TRUE,
                               hull = FALSE,
                               spiders = FALSE)
 
-points <- biplot_scores %>% 
+gg_ordiplot(ord = biplot_scores2, #for some reason the scale gets weird if you don't specify this
+            groups = mFD_sub$site,
+            ellipse = TRUE,
+            hull = FALSE,
+            spiders = FALSE)
+
+
+points1 <- biplot_scores1 %>% 
   cbind(mFD_results %>% select(site:year))
 
-ggplot(data = points, aes(x = RDA1, y = RDA2)) +
+points2 <- biplot_scores2 %>% 
+  cbind(mFD_sub %>% select(site:year))
+
+ggplot(data = points1, aes(x = RDA1, y = PC1)) +
   geom_point(aes(color = site, shape = ipa), size = 3) + 
-  # stat_ellipse(aes(group = site, color = site), 
-  #              linetype = "dashed", show.legend = FALSE) +
+  stat_ellipse(aes(group = site, color = site),
+               linetype = "dashed", show.legend = FALSE) +
   # geom_text_repel(data = points, aes(x = MDS1, y = MDS2, color = site, label = month)) +
   # geom_polygon(data = hulls, aes(x = MDS1, y = MDS2, fill = site), alpha = 0.2) +
   # annotate("text", x = Inf, y = Inf, label = paste("stress = ", S), vjust = 2, hjust = 2) +
@@ -548,79 +686,42 @@ whole_permanova_df <- list_cbind(whole_permanova_list, name_repair = "minimal")
 whole_permanova_df <- whole_permanova_df %>% 
   rownames_to_column(var = "X")
 
-write_csv(plot_permanova_df, here("data", "whole_permanova_df.csv"))
+write_csv(whole_permanova_df, here("data", "whole_permanova_df.csv"))
 
+#test dispersion
+region_dispersions <- mFD_results %>% 
+  select(site:year) %>% 
+  cbind(map2_dfc(metrics, "region", compare_dispersion)) %>% 
+  pivot_longer(cols = !site:year, names_to = "metric")
 
-#Species_Richness
-SR.region.disp <- betadisper(SR_dist, mFD_results$region, type = c("median"), bias.adjust = FALSE,
-                            sqrt.dist = FALSE, add = FALSE)
+ggplot(data = region_dispersions) +
+  geom_boxplot(aes(x = region, y = value)) +
+  theme_classic() + 
+  facet_wrap(~metric, scales = "free")
 
-boxplot(SR.region.disp)
-permutest(SR.region.disp, pairwise = TRUE, permutations = whole_plot_shuffle)
-#south has lower dispersion
+region_arg_list <- list(metrics, rep("region", times = 5), rep(list(whole_plot_shuffle), times = 5))
 
-SR.veg.disp <- betadisper(SR_dist, mFD_results$veg, type = c("median"), bias.adjust = FALSE,
-                             sqrt.dist = FALSE, add = FALSE)
+region_disp_pvals <- pmap_dfc(region_arg_list, compare_disp_pval) %>% 
+  rename(pairs = "pair...1") %>% 
+  select(!contains("..."))
 
-boxplot(SR.veg.disp)
-permutest(SR.veg.disp, pairwise = TRUE, permutations = plot_shuffle)
-#higher dispersion when present
+veg_dispersions <- mFD_results %>% 
+  select(site:year) %>% 
+  cbind(map2_dfc(metrics, "veg", compare_dispersion)) %>% 
+  pivot_longer(cols = !site:year, names_to = "metric")
 
-#FRic
-FRic.region.disp <- betadisper(FRic_dist, mFD_results$region, type = c("median"), bias.adjust = FALSE,
-                             sqrt.dist = FALSE, add = FALSE)
+ggplot(data = veg_dispersions, aes(x = veg, y = value)) +
+  geom_boxplot() +
+  geom_point(aes(color = site)) +
+  theme_classic() + 
+  scale_color_manual(values = site_colors) +
+  facet_wrap(~metric, scales = "free")
 
-boxplot(FRic.region.disp)
-permutest(FRic.region.disp, pairwise = TRUE, permutations = whole_plot_shuffle)
-#south has lower dispersion
+veg_arg_list <- list(metrics, rep("veg", times = 5), rep(list(whole_plot_shuffle), times = 5))
 
-FRic.veg.disp <- betadisper(FRic_dist, mFD_results$veg, type = c("median"), bias.adjust = FALSE,
-                          sqrt.dist = FALSE, add = FALSE)
-
-boxplot(FRic.veg.disp)
-permutest(FRic.veg.disp, pairwise = TRUE, permutations = plot_shuffle)
-#higher dispersion when present
-
-#FEve
-FEve.region.disp <- betadisper(FEve_dist, mFD_results$region, type = c("median"), bias.adjust = FALSE,
-                               sqrt.dist = FALSE, add = FALSE)
-
-boxplot(FEve.region.disp)
-permutest(FEve.region.disp, pairwise = TRUE, permutations = whole_plot_shuffle)
-
-FEve.veg.disp <- betadisper(FEve_dist, mFD_results$veg, type = c("median"), bias.adjust = FALSE,
-                            sqrt.dist = FALSE, add = FALSE)
-
-boxplot(FEve.veg.disp)
-permutest(FEve.veg.disp, pairwise = TRUE, permutations = plot_shuffle)
-#lower dispersion when present
-
-#FDiv
-FDiv.region.disp <- betadisper(FDiv_dist, mFD_results$region, type = c("median"), bias.adjust = FALSE,
-                               sqrt.dist = FALSE, add = FALSE)
-
-boxplot(FDiv.region.disp)
-permutest(FDiv.region.disp, pairwise = TRUE, permutations = whole_plot_shuffle)
-
-FDiv.veg.disp <- betadisper(FDiv_dist, mFD_results$veg, type = c("median"), bias.adjust = FALSE,
-                            sqrt.dist = FALSE, add = FALSE)
-
-boxplot(FDiv.veg.disp)
-permutest(FDiv.veg.disp, pairwise = TRUE, permutations = plot_shuffle)
-#lower dispersion when present
-
-#FDis
-FDis.region.disp <- betadisper(FDis_dist, mFD_results$region, type = c("median"), bias.adjust = FALSE,
-                               sqrt.dist = FALSE, add = FALSE)
-
-boxplot(FDis.region.disp)
-permutest(FDis.region.disp, pairwise = TRUE, permutations = whole_plot_shuffle)
-
-FDis.veg.disp <- betadisper(FDis_dist, mFD_results$veg, type = c("median"), bias.adjust = FALSE,
-                            sqrt.dist = FALSE, add = FALSE)
-
-boxplot(FDis.veg.disp)
-permutest(FDis.veg.disp, pairwise = TRUE, permutations = plot_shuffle)
+veg_disp_pvals <- pmap_dfc(veg_arg_list, compare_disp_pval) %>% 
+  rename(pairs = "pair...1") %>% 
+  select(!contains("..."))
 
 ## Annual test
 annual_shuffle <- how(within = Within(type = "series"),
