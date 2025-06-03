@@ -9,7 +9,6 @@ library(pairwiseAdonis)
 
 
 load(here("data","mFD_results.Rdata")) #created in 04_diversity_analysis
-
 metrics <- c("Species_Richness", "FRic", "FEve", "FDiv", "FDis")
 
 #### permanova ####

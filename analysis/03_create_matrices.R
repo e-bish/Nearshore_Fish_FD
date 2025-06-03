@@ -52,14 +52,14 @@ fish_L_sample <- fish_L_full %>%
   select(!1:3) %>% 
   column_to_rownames(var = "sample")
 
-save(fish_L_sample, file = here("data", "fish_L_sample.Rdata")) #last saved 3/21/25
+save(fish_L_sample, file = here("data", "fish_L_sample.Rdata")) #last saved 6/3/25
 
 #check the abundance matrix for samples with few species
 rows_w_few_spp <- fish_L_sample %>%
   decostand(method = "pa") %>%
   filter(rowSums(.) < 4)
 
-save(rows_w_few_spp, file = here("data", "rows_w_few_spp.Rdata"))
+save(rows_w_few_spp, file = here("data", "rows_w_few_spp.Rdata")) #last saved 6/3/25
 
 samples_w_few_spp <- rownames(rows_w_few_spp)
 
@@ -113,8 +113,9 @@ milieu <- species(spp_names$Species) %>%
   #as reviewed in Quinn 2018 and observed by Munsch et al. 2017, and for steelhead cite Daly et al. 2014
   select(Species, BodyShapeI, DemersPelag, AnaCat) %>% 
   mutate(DemersPelag = ifelse(DemersPelag == "pelagic-neritic", "pelagic", DemersPelag)) %>% #simplify this category because there is only one pelagic and two pelagic-neritic species
-  mutate(migrations = ifelse(is.na(AnaCat), "non-migratory", AnaCat)) %>% #presumed non migratory if no information is available
-  select(!AnaCat)
+  rename(migrations = "AnaCat") %>% 
+  mutate(migrations = ifelse(migrations == "non-migratory" | is.na(migrations), "resident", "migratory")) %>% 
+  mutate(migrations = factor(migrations))
 
 feeding_guild1 <- fooditems(spp_names$Species) %>% 
   select(Species, FoodI, FoodII, PredatorStage) %>% 
@@ -167,7 +168,7 @@ fish_traits <- full_join(fork_length, milieu) %>%
   mutate(ComName = replace(ComName, ComName == "Pacific Sandfish", "Pacific sandfish")) %>%
   arrange(ComName)
 
-write_csv(fish_traits, "data/fish_traits.csv")
+write_csv(fish_traits, "data/fish_traits.csv") #last saved 6/3/25
 
 fish_Q <- fish_traits %>% 
   select(-c(Species, ComName)) %>% 
@@ -205,4 +206,4 @@ fish.list <- list("trait" = fish_Q,
                   "abund" = fish_L,
                   "meta" = fish_meta) 
 
-save(fish.list, file = here("data", "fish.list.Rdata")) #last saved 3/21/25
+save(fish.list, file = here("data", "fish.list.Rdata")) #last saved 6/3/25
