@@ -44,7 +44,8 @@ int.plot_permanova_df <- list_cbind(int.plot_permanova_list, name_repair = "mini
 int.plot_permanova_df <- int.plot_permanova_df %>% 
   rownames_to_column(var = "X")
 
-write_csv(int.plot_permanova_df, here("data", "int.plot_permanova_df.csv"))
+# write_csv(int.plot_permanova_df, here("data", "int.plot_permanova_df.csv"))
+# int.plot_permanova_df <- read_csv(here("data", "int.plot_permanova_df.csv"))
 
 #test single factors 
 calc_plot_permanova <- function(metric) {
@@ -66,7 +67,8 @@ plot_permanova_df <- list_cbind(plot_permanova_list, name_repair = "minimal")
 plot_permanova_df <- plot_permanova_df %>% 
   rownames_to_column(var = "X")
 
-write_csv(plot_permanova_df, here("data", "plot_permanova_df.csv"))
+# write_csv(plot_permanova_df, here("data", "plot_permanova_df.csv"))
+# plot_permanova_df <- read_csv(here("data", "plot_permanova_df.csv"))
 
 ## follow up pairwise tests 
 
@@ -81,8 +83,6 @@ pairwise.adonis2(mFD_results['FRic'] ~ site, data = mFD_results, permutations = 
 #C: EDG, FAM, TUR, SHR
 
 # SR dispersion
-library(patchwork)
-
 compare_dispersion <- function(metric, scale) {
   
   dist <- vegdist(mFD_results[[metric]], method = "euclidean")
@@ -173,50 +173,30 @@ ipa_arg_list <- list(metrics, rep("ipa", times = 5), rep(list(plot_shuffle), tim
 ipa_disp_pvals <- pmap_dfc(ipa_arg_list, compare_disp_pval) %>% 
   rename(pairs = "pair...1") %>% 
   select(!contains("..."))
-
-
+  
+  
 site_arg_list <- list(metrics, rep("site", times = 5), rep(list(plot_shuffle), times = 5))
 
 site_disp_pvals <- pmap_dfc(site_arg_list, compare_disp_pval) %>% 
   rename(pairs = "pair...1") %>% 
-  select(!contains("..."))
+  dplyr::select(!contains("..."))
 
-#### old code ####
-SR_dist <- vegdist(mFD_results['Species_Richness'], method = "euclidean")
+SR_disp <- site_disp_pvals %>% 
+  pull(Species_Richness, pairs)
+FRic_disp <- site_disp_pvals %>% 
+  pull(FRic, pairs)
+FEve_disp <- site_disp_pvals %>% 
+  pull(FEve, pairs)
+FDiv_disp <- site_disp_pvals %>% 
+  pull(FDiv, pairs)
+FDis_disp <- site_disp_pvals %>% 
+  pull(FDis, pairs)
 
-SR.ipa.disp <- betadisper(SR_dist, mFD_results$ipa, type = c("median"), bias.adjust = FALSE,
-                          sqrt.dist = FALSE, add = FALSE)
-
-boxplot(SR.ipa.disp)
-test <- permutest(SR.ipa.disp, pairwise = TRUE, permutations = plot_shuffle)
-
-SR.site.disp <- betadisper(SR_dist, mFD_results$site, type = c("median"), bias.adjust = FALSE,
-                           sqrt.dist = FALSE, add = FALSE)
-
-boxplot(SR.site.disp)
-permutest(SR.site.disp, pairwise = TRUE, permutations = plot_shuffle)
-#A: TUR, FAM, SHR, EDG
-#B: COR, TUR
-#C: FAM, DOK, SHR, EDG
-
-## FRic dispersion
-FRic_dist <- vegdist(mFD_results['FRic'], method = "euclidean")
-
-FRic.ipa.disp <- betadisper(FRic_dist, mFD_results$ipa, type = c("median"), bias.adjust = FALSE,
-                            sqrt.dist = FALSE, add = FALSE)
-
-boxplot(FRic.ipa.disp)
-permutest(FRic.ipa.disp, pairwise = TRUE, permutations = plot_shuffle)
-
-FRic.site.disp <- betadisper(FRic_dist, mFD_results$site, type = c("median"), bias.adjust = FALSE,
-                             sqrt.dist = FALSE, add = FALSE)
-
-boxplot(FRic.site.disp)
-permutest(FRic.site.disp, pairwise = TRUE, permutations = plot_shuffle)
-#A: TUR, FAM, EDG
-#B: COR
-#C: SHR, FAM, TUR
-#D: TUR, DOK, EDG
+SR_disp_letters <- multcompLetters(SR_disp)
+FR_disp_letters <- multcompLetters(FRic_disp)
+FE_disp_letters <- multcompLetters(FEve_disp)
+FV_disp_letters <- multcompLetters(FDiv_disp) 
+# FS_disp_letters <- multcompLetters(FDis_disp) no difference
 
 ### test without sites that have zeros ###
 mFD_sub <- mFD_results %>% 
@@ -233,55 +213,6 @@ FRic.sub.disp <- betadisper(FRic.sub_dist, mFD_sub$site, type = c("median"), bia
 
 boxplot(FRic.sub.disp)
 #can't test with permutations because the design is no longer balanced, but it looks like patterns are largely the same
-
-## FEve dispersion
-FEve_dist <- vegdist(mFD_results['FEve'], method = "euclidean")
-
-FEve.ipa.disp <- betadisper(FEve_dist, mFD_results$ipa, type = c("median"), bias.adjust = FALSE,
-                            sqrt.dist = FALSE, add = FALSE)
-
-boxplot(FEve.ipa.disp)
-permutest(FEve.ipa.disp, pairwise = TRUE, permutations = plot_shuffle)
-
-FEve.site.disp <- betadisper(FEve_dist, mFD_results$site, type = c("median"), bias.adjust = FALSE,
-                             sqrt.dist = FALSE, add = FALSE)
-
-boxplot(FEve.site.disp)
-permutest(FEve.site.disp, pairwise = TRUE, permutations = plot_shuffle)
-#COR different from EDG
-
-## FDiv dispersion
-FDiv_dist <- vegdist(mFD_results['FDiv'], method = "euclidean")
-
-FDiv.ipa.disp <- betadisper(FDiv_dist, mFD_results$ipa, type = c("median"), bias.adjust = FALSE,
-                            sqrt.dist = FALSE, add = FALSE)
-
-boxplot(FDiv.ipa.disp)
-permutest(FDiv.ipa.disp, pairwise = TRUE, permutations = plot_shuffle)
-
-FDiv.site.disp <- betadisper(FDiv_dist, mFD_results$site, type = c("median"), bias.adjust = FALSE,
-                             sqrt.dist = FALSE, add = FALSE)
-
-boxplot(FDiv.site.disp)
-permutest(FDiv.site.disp, pairwise = TRUE, permutations = plot_shuffle)
-#A: FAM, TUR, SHR, DOK, EDG
-#B: COR, TUR, SHR, EDG
-
-## FDis dispersion
-FDis_dist <- vegdist(mFD_results['FDis'], method = "euclidean")
-
-FDis.ipa.disp <- betadisper(FDis_dist, mFD_results$ipa, type = c("median"), bias.adjust = FALSE,
-                            sqrt.dist = FALSE, add = FALSE)
-
-boxplot(FDis.ipa.disp)
-permutest(FDis.ipa.disp, pairwise = TRUE, permutations = plot_shuffle)
-
-FDis.site.disp <- betadisper(FDis_dist, mFD_results$site, type = c("median"), bias.adjust = FALSE,
-                             sqrt.dist = FALSE, add = FALSE)
-
-boxplot(FDis.site.disp)
-permutest(FDis.site.disp, pairwise = TRUE, permutations = plot_shuffle)
-#no differences
 
 #### rda for site ####
 
@@ -310,7 +241,6 @@ gg_ordiplot(ord = biplot_scores2, #for some reason the scale gets weird if you d
             hull = FALSE,
             spiders = FALSE)
 
-
 points1 <- biplot_scores1 %>% 
   cbind(mFD_results %>% select(site:year))
 
@@ -336,7 +266,6 @@ whole_plot_shuffle <- how(within = Within(type = "none"),
 head(mFD_results[, c("site", "ipa", "year")], 15)
 check(mFD_results, control =whole_plot_shuffle)
 head(mFD_results[shuffle(nrow(mFD_results), control = whole_plot_shuffle), c("site", "ipa", "year")], 15)
-
 
 #test interactions first 
 calc_int.whole_permanova <- function(metric) {
