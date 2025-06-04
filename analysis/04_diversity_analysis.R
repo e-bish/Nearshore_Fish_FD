@@ -301,11 +301,12 @@ mFD_results %>%
   pivot_longer(!c(site, ipa, year, shoreline, region, veg), names_to = "metric", values_to = "value") %>% 
   ggplot(aes(x = year, y = value)) +
   geom_boxplot() +
-  geom_point(show.legend = FALSE) +
+  geom_point(aes(color = site)) +
   theme_classic() +
   facet_wrap(~factor(metric, levels = c("Species_Richness", "FDis", "FRic", "FEve", "FDiv"),
                      labels = c("Species Richness", "FDis", "FRic", "FEve", "FDiv")),
              scales = "free_y") + 
+  scale_color_manual(values = site_colors) +
   labs(x = "Condition category", y = "Value") + 
   theme(strip.background = element_rect(fill = NA, colour = NA))
 
