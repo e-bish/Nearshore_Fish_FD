@@ -98,6 +98,50 @@ mFD_results <- mFD_values %>%
 # save(mFD_results, file = here("data","mFD_results.Rdata")) #last saved 5/30/25 with simplified migrations
 load(here("data","mFD_results.Rdata"))
 
+##### summary stats #####
+create_metric_summary_table <- function(metric_ID) {
+  tmp <- mFD_results %>% 
+    summarize(min = min(.data[[metric_ID]]), 
+              max = max(.data[[metric_ID]]), 
+              avg = mean(.data[[metric_ID]]), 
+              sd = sd(.data[[metric_ID]])) %>% 
+    mutate(metric = metric_ID)
+  
+  return(tmp)
+}
+
+summary_stats <- map_dfr(metrics, create_metric_summary_table)
+
+#range of species richness 
+mFD_results %>% 
+  filter(Species_Richness == min(Species_Richness) | Species_Richness == max(Species_Richness))
+#(min values for other metrics are all zero)
+
+shapiro.test(mFD_results$Species_Richness) #significant p value, meaning data does not meet the assumption of normality
+hist(log(mFD_results$Species_Richness))
+shapiro.test(log(mFD_results$Species_Richness))
+kruskal.test(Species_Richness ~ site, data = mFD_results)
+
+mFD_results %>% 
+  group_by(site) %>% 
+  summarize(min = min(Species_Richness), max= max(Species_Richness), avg = mean(Species_Richness), sd = sd(Species_Richness))
+
+pairwise.wilcox.test(mFD_results$Species_Richness, mFD_results$site,
+                     p.adjust.method = "BH")
+
+mFD_results %>% 
+  filter(FRic == min(FRic) | FRic == max(FRic))
+
+filter(!site == "COR") %>% 
+  summarize(min = min(Species_Richness), max= max(Species_Richness), avg = mean(Species_Richness), sd = sd(Species_Richness))
+
+mFD_results %>% 
+  filter(FEve == min(FEve) | FEve == max(FEve))
+group_by(ipa) %>% 
+  summarize(min = min(Species_Richness), max= max(Species_Richness), avg = mean(Species_Richness), sd = sd(Species_Richness))
+
+kruskal.test(Species_Richness ~ipa, data = mFD_results)
+
 #plot with full range
 plot_prep <- mFD_results %>%
   mutate(ipa2 = ifelse(shoreline == "TURN2", "alt", "no_alt")) %>% 
@@ -231,9 +275,6 @@ free(p1) + guide_area() + p2 +
 # ggsave(here("figures", "figure_3.png"), 
 #        width = 8, height = 6, dpi = 300) 
 
-#### summary stats ####
-
-
 ######################
 
 #### FD by site ####
@@ -310,7 +351,7 @@ mFD_results %>%
   labs(x = "Condition category", y = "Value") + 
   theme(strip.background = element_rect(fill = NA, colour = NA))
 
-### script to estimate the contribution of each trait to metrics of FD
+#### estimate the contribution of each trait to metrics of FD ####
 ### based on Stuart-Smith et al. 2013
 
 calculate_FD <- function(trait_mat, trait_vec) {
