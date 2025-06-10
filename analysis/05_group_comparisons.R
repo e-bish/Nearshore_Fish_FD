@@ -276,21 +276,24 @@ head(mFD_results[, c("site", "ipa", "year")], 15)
 check(mFD_results, control =whole_plot_shuffle)
 head(mFD_results[shuffle(nrow(mFD_results), control = whole_plot_shuffle), c("site", "ipa", "year")], 15)
 
-#test interactions first 
-int.whole_permanova_list <- map(metrics, calc_int.whole_permanova)
-int.whole_permanova_df <- list_cbind(int.whole_permanova_list, name_repair = "minimal")
-int.whole_permanova_df <- int.whole_permanova_df %>% 
-  rownames_to_column(var = "X")
-
-write_csv(int.whole_permanova_df, here("data", "int.whole_permanova_df.csv"))
 
 #test single factors 
-whole_permanova_list <- map(metrics, calc_whole_permanova)
-whole_permanova_df <- list_cbind(whole_permanova_list, name_repair = "minimal")
-whole_permanova_df <- whole_permanova_df %>% 
-  rownames_to_column(var = "X")
+permutations <- rbind(1:nrow(mFD_results),
+                      shuffleSet(n = nrow(mFD_results), 
+                                 control = whole_plot_shuffle, nset = 999))
 
-write_csv(whole_permanova_df, here("data", "whole_permanova_df.csv"))
+
+region_pvals <- map_dfc(metrics, calc_region_pvals) %>% 
+  rename(Degrees_Freedom = "Df_Species_Richness") %>% 
+  select(!contains("Df"))
+
+write_csv(region_pvals, here("data", "region_pvals.csv"))
+
+veg_pvals <- map_dfc(metrics, calc_veg_pvals) %>% 
+  rename(Degrees_Freedom = "Df_Species_Richness") %>% 
+  select(!contains("Df"))
+
+write_csv(veg_pvals, here("data", "veg_pvals.csv"))
 
 #test dispersion
 region_dispersions <- mFD_results %>% 

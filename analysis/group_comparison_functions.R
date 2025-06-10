@@ -29,35 +29,48 @@ calc_plot_permanova <- function(metric) {
   return(output)
 }
 
-#### calculate whole plot scale permanova with interaction
-calc_int.whole_permanova <- function(metric) {
-  result <- adonis2(mFD_results[metric] ~ region*veg, 
-                    data = mFD_results, 
-                    permutations = whole_plot_shuffle, 
-                    by = "margin", 
-                    method = "euclidean")
+### calculate whole plot scale permanova for region with manual p values
+calc_region_pvals <- function (metric) {
   
-  colnames(result) <- paste(colnames(result), metric, sep = '_')
+  mod_result <- adonis2(mFD_results[metric] ~ region + site,
+                        data = mFD_results,
+                        method = "euclidean",
+                        permutations = 0, 
+                        by = "terms")
   
-  output <- as.data.frame(result)
+  output <- as.data.frame(mod_result)
+  
+  results <- matrix(nrow = nrow(permutations), ncol = 4)
+  
+  colnames(results) <- c("region", "site", "residual", "total")
+  
+  for (i in 1:nrow(permutations)) {
+    temp.data <- mFD_results[permutations[i, ], ]
+    temp <- adonis2(mFD_results[metric] ~ region + site,
+                    data = temp.data,
+                    method = "euclidean",
+                    permutations = 0, 
+                    by = "terms")
+    results[i,] <- t(temp$SumOfSqs)
+  }
+  
+  aov_result <- summary(aov(mFD_results[[metric]] ~ region + site + Error(site), data = mFD_results))
+  
+  results <- results %>% 
+    data.frame() %>% 
+    mutate(F.region = (region / aov_result[["Error: site"]][[1]][1,1]) / (site / aov_result[["Error: site"]][[1]][2,1]),
+           F.site = (site / aov_result[["Error: site"]][[1]][2,1]) / (residual / aov_result[["Error: Within"]][[1]][1,1]))
+  
+  region_pval <- with(results, sum(F.region >= F.region[1]) / length(F.region))
+  
+  output[1,'Pr(>F)'] <- region_pval
+  output[2,'Pr(>F)'] <- NA
+  
+  colnames(output) <- paste(colnames(output), metric, sep = '_')
   
   return(output)
 }
 
-#### calculate permanova shuffling by site with single factors
-calc_whole_permanova <- function(metric) {
-  result <- adonis2(mFD_results[metric] ~ region + veg, 
-                    data = mFD_results, 
-                    permutations = whole_plot_shuffle, 
-                    by = "margin", 
-                    method = "euclidean")
-  
-  colnames(result) <- paste(colnames(result), metric, sep = '_')
-  
-  output <- as.data.frame(result) 
-  
-  return(output)
-}
 
 
 #### calculate dispersion for each group
@@ -76,6 +89,47 @@ compare_dispersion <- function(metric, scale) {
   
 }
 
+### calculate whole plot scale permanova for veg with manual p values
+calc_veg_pvals <- function (metric) {
+  
+  mod_result <- adonis2(mFD_results[metric] ~ veg + site,
+                        data = mFD_results,
+                        method = "euclidean",
+                        permutations = 0, 
+                        by = "terms")
+  
+  output <- as.data.frame(mod_result)
+  
+  results <- matrix(nrow = nrow(permutations), ncol = 4)
+  
+  colnames(results) <- c("veg", "site", "residual", "total")
+  
+  for (i in 1:nrow(permutations)) {
+    temp.data <- mFD_results[permutations[i, ], ]
+    temp <- adonis2(mFD_results[metric] ~ veg + site,
+                    data = temp.data,
+                    method = "euclidean",
+                    permutations = 0, 
+                    by = "terms")
+    results[i,] <- t(temp$SumOfSqs)
+  }
+  
+  aov_result <- summary(aov(mFD_results[[metric]] ~ veg + site + Error(site), data = mFD_results))
+  
+  results <- results %>% 
+    data.frame() %>% 
+    mutate(F.veg = (veg / aov_result[["Error: site"]][[1]][1,1]) / (site / aov_result[["Error: site"]][[1]][2,1]),
+           F.site = (site / aov_result[["Error: site"]][[1]][2,1]) / (residual / aov_result[["Error: Within"]][[1]][1,1]))
+  
+  veg_pval <- with(results, sum(F.veg >= F.veg[1]) / length(F.veg))
+  
+  output[1,'Pr(>F)'] <- veg_pval
+  output[2,'Pr(>F)'] <- NA
+  
+  colnames(output) <- paste(colnames(output), metric, sep = '_')
+  
+  return(output)
+}
 
 #### calculate dispersion for the results dataframe without zeros
 compare_sub_dispersion <- function(metric, scale) {
