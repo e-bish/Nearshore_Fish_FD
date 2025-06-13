@@ -276,22 +276,24 @@ head(mFD_results[, c("site", "ipa", "year")], 15)
 check(mFD_results, control =whole_plot_shuffle)
 head(mFD_results[shuffle(nrow(mFD_results), control = whole_plot_shuffle), c("site", "ipa", "year")], 15)
 
-
 #test single factors 
 permutations <- rbind(1:nrow(mFD_results),
                       shuffleSet(n = nrow(mFD_results), 
                                  control = whole_plot_shuffle, nset = 999))
 
-
 region_pvals <- map_dfc(metrics, calc_region_pvals) %>% 
   rename(Degrees_Freedom = "Df_Species_Richness") %>% 
-  select(!contains("Df"))
+  select(!contains("Df")) %>% 
+  rownames_to_column(var = "X") %>% 
+  mutate_if(is.numeric, round, digits = 3)
 
-write_csv(region_pvals, here("data", "region_pvals.csv"))
+write_csv(region_pvals2, here("data", "region_pvals.csv"))
 
 veg_pvals <- map_dfc(metrics, calc_veg_pvals) %>% 
   rename(Degrees_Freedom = "Df_Species_Richness") %>% 
-  select(!contains("Df"))
+  select(!contains("Df"))%>% 
+  rownames_to_column(var = "X") %>% 
+  mutate_if(is.numeric, round, digits = 3)
 
 write_csv(veg_pvals, here("data", "veg_pvals.csv"))
 
