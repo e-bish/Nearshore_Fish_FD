@@ -17,10 +17,22 @@ source(here("analysis", "group_comparison_functions.R"))
 load(here("data","mFD_results.Rdata")) #created in 04_diversity_analysis
 metrics <- c("Species_Richness", "FRic", "FEve", "FDiv", "FDis")
 
+mFD_results_export <- mFD_results %>% 
+  mutate(sample = paste0(shoreline, year), .before = "site") %>% 
+  select(!site:year)
+
+mFD_factors <- mFD_results %>% 
+  mutate(sample = paste0(shoreline, year), .before = "site") %>% 
+  select(sample:year)
+
+write_csv(mFD_results_export, here("data", "mFD_results.csv"))
+write_csv(mFD_factors, here('data', 'mFD_factors.csv'))
+
+
 #### Permute factors at the shoreline level ####
 
 ## shuffle shorelines to assess site and shoreline condition variables ##
-plot_shuffle <- how(within = Within(type = "series"),
+plot_shuffle <- how(within = Within(type = "free"),
                     plots = Plots(strata = mFD_results$shoreline, type = "free"),
                     nperm = 9999)
 
