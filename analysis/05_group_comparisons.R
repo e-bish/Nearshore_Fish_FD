@@ -15,24 +15,15 @@ source(here("analysis", "group_comparison_functions.R"))
 
 #load data 
 load(here("data","mFD_results.Rdata")) #created in 04_diversity_analysis
-metrics <- c("Species_Richness", "FRic", "FEve", "FDiv", "FDis")
+metrics <- c("Species_Richness", "SESFRic", "FEve", "FDiv", "SESFDis")
 
-mFD_results_export <- mFD_results %>% 
-  mutate(sample = paste0(shoreline, year), .before = "site") %>% 
-  select(!site:year)
-
-mFD_factors <- mFD_results %>% 
-  mutate(sample = paste0(shoreline, year), .before = "site") %>% 
-  select(sample:year)
-
-write_csv(mFD_results_export, here("data", "mFD_results.csv"))
-write_csv(mFD_factors, here('data', 'mFD_factors.csv'))
-
+mFD_results <- mFD_results %>% 
+ inner_join(SES_tab)
 
 #### Permute factors at the shoreline level ####
 
 ## shuffle shorelines to assess site and shoreline condition variables ##
-plot_shuffle <- how(within = Within(type = "free"),
+plot_shuffle <- how(within = Within(type = "series"),
                     plots = Plots(strata = mFD_results$shoreline, type = "free"),
                     nperm = 9999)
 
@@ -42,10 +33,10 @@ plot_shuffle <- how(within = Within(type = "free"),
 # head(mFD_results[shuffle(nrow(mFD_results), control = plot_shuffle), c("site", "ipa", "year")], 15)
 
 #test interactions first 
-# int.plot_permanova_list <- map(metrics, calc_int.plot_permanova)
-# int.plot_permanova_df <- list_cbind(int.plot_permanova_list, name_repair = "minimal")
-# int.plot_permanova_df <- int.plot_permanova_df %>% 
-#   rownames_to_column(var = "X")
+int.plot_permanova_list <- map(metrics, calc_int.plot_permanova)
+int.plot_permanova_df <- list_cbind(int.plot_permanova_list, name_repair = "minimal")
+int.plot_permanova_df <- int.plot_permanova_df %>%
+  rownames_to_column(var = "X")
 
 # write_csv(int.plot_permanova_df, here("data", "int.plot_permanova_df.csv"))
 int.plot_permanova_df <- read_csv(here("data", "int.plot_permanova_df.csv"))
@@ -66,11 +57,11 @@ pairwise.adonis2(mFD_results['Species_Richness'] ~ site, data = mFD_results, per
 #B: FAM, SHR, TUR, DOK
 #C: DOK, EDG, FAM, SHR
 
-pairwise.adonis2(mFD_results['FRic'] ~ site, data = mFD_results, permutations = 999, by = "margin", method = "euclidean")
-#A: COR
-#B: DOK, EDG
-#C: EDG, TUR
-#D: SHR, FAM, TUR
+# pairwise.adonis2(mFD_results['FRic'] ~ site, data = mFD_results, permutations = 999, by = "margin", method = "euclidean")
+# #A: COR
+# #B: DOK, EDG
+# #C: EDG, TUR
+# #D: SHR, FAM, TUR
 
 mFD_df <- as.data.frame(mFD_results)
 
@@ -135,61 +126,24 @@ site_dispersions_signif <- full_join(site_dispersions, site_signif) %>%
   full_join(range_df) %>% 
   mutate(site = factor(site, levels = c("FAM", "TUR", "COR", "SHR", "DOK", "EDG")),
          metric = factor(metric, levels = metrics)) %>% 
-  mutate(letters = ifelse(metric == "FDis", NA, letters))
+  mutate(letters = ifelse(metric %in% c("SESFRic", "SESFDis") , NA, letters))
 
-site_full <- ggplot(data = site_dispersions_signif) +
+ggplot(data = site_dispersions_signif) +
   geom_boxplot(aes(x = site, y = value)) +
   geom_point(aes(y = ymax, x = site), color = "white", size = 0) +
   geom_text(aes(label = letters, y = max, x = site), vjust = -0.5) +
   theme_classic() + 
-  labs(y = "Dispersion", title = "Full") +
+  labs(y = "Dispersion") +
   facet_wrap(~metric, ncol = 1, scales = "free")
   
-## test for differences in site without zeros
-mFD_sub <- mFD_results %>% 
-  filter(!Species_Richness < 4)
-
-site_sub_disp <- mFD_sub %>% 
-  select(site:year) %>% 
-  cbind(map2_dfc(metrics, "site", compare_sub_dispersion)) 
-#cannot test with the same permutation structure because the design is no longer balanced
-
-# with(site_sub_disp, (kruskal.test(FRic ~ site)))
-# with(site_sub_disp, (kruskal.test(FEve ~ site)))
-# with(site_sub_disp, (kruskal.test(FDiv ~ site)))
-# with(site_sub_disp, (kruskal.test(FDis ~ site)))
-# 
-# with(site_sub_disp, (pairwise.wilcox.test(FRic, site)))
-# with(site_sub_disp, (pairwise.wilcox.test(FEve, site)))
-# with(site_sub_disp, (pairwise.wilcox.test(FDiv, site)))
-# with(site_sub_disp, (pairwise.wilcox.test(FDis, site)))
-
-site_sub_dispersions <- site_sub_disp %>% 
-  pivot_longer(cols = !site:year, names_to = "metric") %>% 
-  mutate(metric = factor(metric, levels = metrics))
-
-site_sub <- ggplot(data = site_sub_dispersions) +
-  geom_boxplot(aes(x = site, y = value)) +
-  theme_classic() + 
-  labs(y = "Dispersion", title = "Sub") +
-  facet_wrap(~metric, ncol = 1, scales = "free")
-
-site_full + site_sub + plot_layout(axis_titles = "collect")
 
 #### rda for site ####
-
 mod1 <- rda(mFD_results[8:11] ~ ipa + site + year, data = mFD_results)
-mod2 <- rda(mFD_sub[8:11] ~ ipa + site + year, data = mFD_sub)
 plot(mod1)
-plot(mod2)
 
 rda_scores1 <- scores(mod1)
 sites_scores1 <- as.data.frame(rda_scores1$sites)
 biplot_scores1 <- as.data.frame(rda_scores1$species)
-
-rda_scores2 <- scores(mod2)
-sites_scores2 <- as.data.frame(rda_scores2$sites)
-biplot_scores2 <- as.data.frame(rda_scores2$species)
 
 # gg_ordiplot(ord = biplot_scores1, #for some reason the scale gets weird if you don't specify this
 #             groups = mFD_results$site,
@@ -206,9 +160,6 @@ biplot_scores2 <- as.data.frame(rda_scores2$species)
 points1 <- sites_scores1 %>% 
   cbind(mFD_results %>% select(site:year))
 
-points2 <- sites_scores2 %>% 
-  cbind(mFD_sub %>% select(site:year))
-
 site_colors <- rev(c("#8c510a","#d8b365", 
                      # "#f6e8c1",
                      "lightgoldenrod",
@@ -216,7 +167,7 @@ site_colors <- rev(c("#8c510a","#d8b365",
                      "lightblue",
                      "#5ab4ac", "#01665e"))
 
-RDA_full <- ggplot(data = points1, aes(x = RDA1, y = RDA2)) +
+ggplot(data = points1, aes(x = RDA1, y = RDA2)) +
   geom_point(aes(color = site, shape = ipa), size = 3) + 
   stat_ellipse(aes(group = site, color = site),
                linetype = "dashed", show.legend = FALSE) +
@@ -233,33 +184,8 @@ RDA_full <- ggplot(data = points1, aes(x = RDA1, y = RDA2)) +
             size=4) +
   scale_color_manual(values = site_colors) +
   labs(shape = "Shoreline Condition", 
-       color = "Site",
-       title = "Full") +
+       color = "Site") +
   theme_minimal() 
-
-
-RDA_sub <- ggplot(data = points2, aes(x = RDA1, y = RDA2)) +
-  geom_point(aes(color = site, shape = ipa), size = 3) + 
-  stat_ellipse(aes(group = site, color = site),
-               linetype = "dashed", show.legend = FALSE) +
-  geom_segment(data=biplot_scores2,
-               aes(x = 0, y = 0, xend=RDA1, yend=RDA2),
-               arrow=arrow(length = unit(0.01, "npc")),
-               lwd=0.75) +
-  geom_text(data=biplot_scores2,
-            aes(x=RDA1*0.9,
-                y=RDA2*0.9,
-                label=metrics[-1]),
-            nudge_x = c(-0.15, -0.15, -0.15, -0.15), 
-            nudge_y = c(0, -0.13, 0.1, 0),
-            size=4) +
-  scale_color_manual(values = site_colors) +
-  labs(shape = "Shoreline Condition", 
-       color = "Site",
-       title = "Sub") +
-  theme_minimal() 
-
-RDA_full + RDA_sub + plot_layout(guides = 'collect')
 
 # dispersion between years
 year_dispersions <- mFD_results %>% 

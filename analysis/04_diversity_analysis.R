@@ -53,13 +53,11 @@ traits_correlations$"tr_faxes_stat"[which(traits_correlations$"tr_faxes_stat"$"p
 
 trait_plot <- traits_correlations$"tr_faxes_plot"
 
-trait_plot + scale_x_discrete(guide = guide_axis(angle = 90)) 
-
 #calculate FD Indices
 alpha_fd_indices <- alpha.fd.multidim(sp_faxes_coord = trait_space[ , c("PC1", "PC2", "PC3")],
                                       asb_sp_w = data.matrix(fish.list$abund),
                                       ind_vect = c("fric", "feve", "fdiv", "fdis"),
-                                      scaling = TRUE,
+                                      scaling = FALSE,
                                       check_input = TRUE,
                                       details_returned = TRUE)
 
@@ -312,34 +310,6 @@ mFD_results %>%
 # ggsave(here("figures", "figure_S2.png"), 
 #        width = 8, height = 6, dpi = 300) 
 
-#### FD by region ####
-mFD_results %>% 
-  pivot_longer(!c(site, ipa, year, shoreline, region, veg), names_to = "metric", values_to = "value") %>% 
-  ggplot(aes(x = region, y = value)) +
-  geom_boxplot() +
-  geom_point(aes(color = site)) +
-  theme_classic() +
-  facet_wrap(~factor(metric, levels = c("Species_Richness", "FDis", "FRic", "FEve", "FDiv"),
-                     labels = c("Species Richness", "FDis", "FRic", "FEve", "FDiv")),
-             scales = "free_y") + 
-  scale_color_manual(values = site_colors) +
-  labs(x = "Region", y = "Value") + 
-  theme(strip.background = element_rect(fill = NA, colour = NA))
-
-#### FD by veg ####
-mFD_results %>% 
-  pivot_longer(!c(site, ipa, year, shoreline, region, veg), names_to = "metric", values_to = "value") %>% 
-  ggplot(aes(x = veg, y = value)) +
-  geom_boxplot() +
-  geom_point(aes(color = site)) +
-  theme_classic() +
-  facet_wrap(~factor(metric, levels = c("Species_Richness", "FDis", "FRic", "FEve", "FDiv"),
-                     labels = c("Species Richness", "FDis", "FRic", "FEve", "FDiv")),
-             scales = "free_y") + 
-  scale_color_manual(values = site_colors) +
-  labs(x = "Eelgrass", y = "Value") + 
-  theme(strip.background = element_rect(fill = NA, colour = NA))
-
 #### FD by year ####
 mFD_results %>% 
   pivot_longer(!c(site, ipa, year, shoreline, region, veg), names_to = "metric", values_to = "value") %>% 
@@ -353,6 +323,34 @@ mFD_results %>%
   scale_color_manual(values = site_colors) +
   labs(x = "Condition category", y = "Value") + 
   theme(strip.background = element_rect(fill = NA, colour = NA))
+
+#### FD by region ####
+# mFD_results %>% 
+#   pivot_longer(!c(site, ipa, year, shoreline, region, veg), names_to = "metric", values_to = "value") %>% 
+#   ggplot(aes(x = region, y = value)) +
+#   geom_boxplot() +
+#   geom_point(aes(color = site)) +
+#   theme_classic() +
+#   facet_wrap(~factor(metric, levels = c("Species_Richness", "FDis", "FRic", "FEve", "FDiv"),
+#                      labels = c("Species Richness", "FDis", "FRic", "FEve", "FDiv")),
+#              scales = "free_y") + 
+#   scale_color_manual(values = site_colors) +
+#   labs(x = "Region", y = "Value") + 
+#   theme(strip.background = element_rect(fill = NA, colour = NA))
+# 
+# #### FD by veg ####
+# mFD_results %>% 
+#   pivot_longer(!c(site, ipa, year, shoreline, region, veg), names_to = "metric", values_to = "value") %>% 
+#   ggplot(aes(x = veg, y = value)) +
+#   geom_boxplot() +
+#   geom_point(aes(color = site)) +
+#   theme_classic() +
+#   facet_wrap(~factor(metric, levels = c("Species_Richness", "FDis", "FRic", "FEve", "FDiv"),
+#                      labels = c("Species Richness", "FDis", "FRic", "FEve", "FDiv")),
+#              scales = "free_y") + 
+#   scale_color_manual(values = site_colors) +
+#   labs(x = "Eelgrass", y = "Value") + 
+#   theme(strip.background = element_rect(fill = NA, colour = NA))
 
 #### estimate the contribution of each trait to metrics of FD ####
 ### based on Stuart-Smith et al. 2013
