@@ -1,0 +1,94 @@
+
+load(here("data", "fish_L_full.Rdata"))
+
+fish_L_full <- fish_L_full %>% 
+  mutate(sample = paste(site, ipa, year, sep = "_"), .after = year) %>% 
+  select(!1:3) %>% 
+  column_to_rownames(var = "sample")
+
+null_L_indep <- list(fish_L_full)
+n_iter <- 1000 #observed data + 999 permutations
+#
+# #frequency is C4 null model in Gotzenberger et al. that works well for detection of environmental filtering
+# #independentswap seems to be the method that other FD papers have used (e.g., Zhang) and is recommended by Swenson
+for (i in 2:n_iter) {
+  set.seed(i)
+  null_L[[i]] <- randomizeMatrix(fish_L_full, null.model ="independentswap", iterations = 1000)
+}
+
+# identify_rwfs <- function (df) {
+#   rows_w_few_spp <- df %>%
+#     decostand(method = "pa") %>%
+#     filter(rowSums(.) < 4)
+#   
+#   return(rows_w_few_spp)
+# }
+# 
+# null_L_dfs <- map(null_L, as.data.frame)
+# null_L_rwfs <- map(null_L_dfs, identify_rwfs)
+
+load(here("data", "rows_w_few_spp.Rdata"))
+
+samples_w_few_spp <- rownames(rows_w_few_spp)
+
+remove_rwfs <- function(df) {
+  
+  df2 <- as.data.frame(df)
+  
+  out <- df2 %>% filter(!rownames(.) %in% samples_w_few_spp)
+  
+  return(out)
+}
+
+null_L_sample <- map(null_L, remove_rwfs)
+
+FD_null_results <- list()
+for (i in 1:n_iter){
+  
+  null_fishFD <-  alpha.fd.multidim(sp_faxes_coord = trait_space[ , c("PC1", "PC2", "PC3")],
+                                    asb_sp_w = data.matrix(null_L_sample[[i]]),
+                                    ind_vect = c("fric","fdis"),
+                                    scaling = FALSE,
+                                    check_input = TRUE,
+                                    details_returned = TRUE)
+  
+  null_mFD_values <- null_fishFD$"functional_diversity_indices"
+  
+  FD_null_df <- null_mFD_values %>%
+    as_tibble(rownames = "sample")
+  
+  FD_null_results <- rbind(FD_null_results, FD_null_df)
+}
+
+FD_null_means <- FD_null_results %>% 
+  group_by(sample) %>% 
+  summarize(across(where(is.numeric), list(mean = mean, sd = sd))) %>% 
+  separate_wider_delim(sample, delim = "_", names = c("site", "ipa", "year"), cols_remove = TRUE) %>% 
+  full_join(add_small_samples_back) %>% 
+  mutate(site = factor(site, levels = c("FAM", "TUR", "COR", "SHR", "DOK", "EDG")),
+         region = ifelse(site %in% c("FAM", "TUR", "COR"), "North", "South"), 
+         veg = ifelse(site %in% c("TUR", "COR", "SHR"), "present", "absent"), .after = site,
+         shoreline = paste0(site, case_when(ipa == "Armored" ~ "A", 
+                                            ipa == "Restored" ~ "R", 
+                                            ipa == "Natural2" ~ "N2",
+                                            TRUE ~ "N")),
+         across(where(is.numeric), ~replace_na(., 0))) %>% 
+  mutate(ipa = ifelse(ipa == "Natural2", "Natural", ipa)) %>% 
+  arrange(shoreline, year)
+
+# FD_means <- mFD_results %>% 
+#   group_by(site) %>% 
+#   summarize(across(where(is.numeric), mean)) %>% 
+#   relocate(FRic,.after = Species_Richness) %>% 
+#   relocate(FDis, .after = FDiv)
+
+SES_tab <- as.data.frame(mFD_results[1:6])
+SES_tab[,7] <- mFD_results$Species_Richness 
+SES_tab[,8] <- (mFD_results$FRic - FD_null_means$fric_mean) / FD_null_means$fric_sd
+# SES_tab[,9] <- (mFD_results$FEve - FD_null_summary$FEve_mean) / FD_null_summary$FEve_sd
+# SES_tab[,10] <- (mFD_results$FDiv - FD_null_summary$FDiv_mean) / FD_null_summary$FDiv_sd
+SES_tab[,9] <- (mFD_results$FDis - FD_null_means$fdis_mean) / FD_null_means$fdis_sd
+
+colnames(SES_tab)[7:9] <- metrics[c(1,2,5)]
+SES_tab[is.na(SES_tab)] <- 0
+

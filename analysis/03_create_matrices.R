@@ -47,6 +47,9 @@ fish_L_full <- net_core %>% #L is referring to the RLQ analysis
   clean_names() %>%
   ungroup()
 
+save(fish_L_full, file = here("data", "fish_L_full.Rdata")) #last saved 6/3/25
+
+
 fish_L_sample <- fish_L_full %>% 
   mutate(sample = paste(site, ipa, year, sep = "_"), .after = year) %>% 
   select(!1:3) %>% 
