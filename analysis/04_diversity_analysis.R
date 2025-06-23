@@ -112,35 +112,38 @@ create_metric_summary_table <- function(metric_ID) {
 
 summary_stats <- map_dfr(metrics, create_metric_summary_table)
 
-#range of species richness 
-mFD_results %>% 
-  filter(Species_Richness == min(Species_Richness) | Species_Richness == max(Species_Richness))
-#(min values for other metrics are all zero)
+#Species richness 
 
-shapiro.test(mFD_results$Species_Richness) #significant p value, meaning data does not meet the assumption of normality
-hist(log(mFD_results$Species_Richness))
-shapiro.test(log(mFD_results$Species_Richness))
-kruskal.test(Species_Richness ~ site, data = mFD_results)
+#test for differences in shoreline condition
+# kruskal.test(Species_Richness ~ipa, data = mFD_results)
 
 mFD_results %>% 
-  group_by(site) %>% 
+filter(site == "COR") %>% 
   summarize(min = min(Species_Richness), max= max(Species_Richness), avg = mean(Species_Richness), sd = sd(Species_Richness))
 
-pairwise.wilcox.test(mFD_results$Species_Richness, mFD_results$site,
-                     p.adjust.method = "BH")
-
 mFD_results %>% 
-  filter(FRic == min(FRic) | FRic == max(FRic))
-
 filter(!site == "COR") %>% 
   summarize(min = min(Species_Richness), max= max(Species_Richness), avg = mean(Species_Richness), sd = sd(Species_Richness))
+
+
+# #test for differences in sites
+# shapiro.test(mFD_results$Species_Richness) #significant p value, meaning data does not meet the assumption of normality
+# hist(log(mFD_results$Species_Richness))
+# shapiro.test(log(mFD_results$Species_Richness))
+# kruskal.test(Species_Richness ~ site, data = mFD_results)
+# 
+# mFD_results %>% 
+#   group_by(site) %>% 
+#   summarize(min = min(Species_Richness), max= max(Species_Richness), avg = mean(Species_Richness), sd = sd(Species_Richness))
+# 
+# pairwise.wilcox.test(mFD_results$Species_Richness, mFD_results$site,
+#                      p.adjust.method = "BH")
+
 
 mFD_results %>% 
   filter(FEve == min(FEve) | FEve == max(FEve))
 group_by(ipa) %>% 
   summarize(min = min(Species_Richness), max= max(Species_Richness), avg = mean(Species_Richness), sd = sd(Species_Richness))
-
-kruskal.test(Species_Richness ~ipa, data = mFD_results)
 
 #plot with full range
 plot_prep <- mFD_results %>%

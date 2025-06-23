@@ -8,6 +8,8 @@ library(patchwork)
 library(pairwiseAdonis)
 library(multcompView)
 
+set.seed(2025)
+
 #load custom functions
 source(here("analysis", "group_comparison_functions.R"))
 
@@ -37,10 +39,10 @@ plot_shuffle <- how(within = Within(type = "series"),
 int.plot_permanova_df <- read_csv(here("data", "int.plot_permanova_df.csv"))
 
 #test single factors 
-# plot_permanova_list <- map(metrics, calc_plot_permanova)
-# plot_permanova_df <- list_cbind(plot_permanova_list, name_repair = "minimal") 
-# plot_permanova_df <- plot_permanova_df %>% 
-#   rownames_to_column(var = "X")
+plot_permanova_list <- map(metrics, calc_plot_permanova)
+plot_permanova_df <- list_cbind(plot_permanova_list, name_repair = "minimal")
+plot_permanova_df <- plot_permanova_df %>%
+  rownames_to_column(var = "X")
 
 # write_csv(plot_permanova_df, here("data", "plot_permanova_df.csv"))
 plot_permanova_df <- read_csv(here("data", "plot_permanova_df.csv"))
@@ -49,7 +51,7 @@ plot_permanova_df <- read_csv(here("data", "plot_permanova_df.csv"))
 
 pairwise.adonis2(mFD_results['Species_Richness'] ~ site, data = mFD_results, permutations = 999, by = "margin", method = "euclidean")
 #A: COR
-#B: FAM, SHR, TUR
+#B: FAM, SHR, TUR, DOK
 #C: DOK, EDG, FAM, SHR
 
 pairwise.adonis2(mFD_results['FRic'] ~ site, data = mFD_results, permutations = 999, by = "margin", method = "euclidean")
