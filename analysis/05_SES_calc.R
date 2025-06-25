@@ -1,4 +1,6 @@
-
+library(tidyverse)
+library(here)
+library(mFD)
 library(picante)
 
 load(here("data", "fish_L_full.Rdata"))
@@ -33,27 +35,9 @@ remove_rwfs <- function(df) {
 
 null_L_sample <- map(null_L, remove_rwfs)
 
+#### calculate FD metrics for null matrices with mFD
 load(here("data", "fish.list.Rdata"))
-
-#### run with mFD ####
-traits_cat <- data.frame(trait_name = colnames(fish.list$trait),
-                         trait_type = c("Q", "N", "N", "N", "N"))
-
-#create the trait space
-dist_mat <- funct.dist(sp_tr = fish.list$trait, 
-                       tr_cat = traits_cat,
-                       metric = "gower",
-                       weight_type = "equal",
-                       stop_if_NA = TRUE)
-
-#examine the quality of the potential functional spaces 
-space_quality <- quality.fspaces(sp_dist = dist_mat,
-                                 maxdim_pcoa = 10,
-                                 deviation_weighting = c("absolute", "squared"),
-                                 fdist_scaling = TRUE,
-                                 fdendro = "ward.D2")
-
-trait_space <- space_quality$"details_fspaces"$"sp_pc_coord"
+load(here("data", "trait_space.Rda"))
 
 FD_null_results <- list()
 for (i in 1:n_iter){
@@ -110,6 +94,6 @@ SES_tab[is.na(SES_tab)] <- 0
 
 colnames(SES_tab)[7:9] <- c("Species_Richness", "SESFRic", "SESFDis")
 
-
 all(SES_tab$Species_Richness == mFD_results$Species_Richness) #TRUE
 
+save(SES_tab, file = here("data", "SES_tab.Rda"))
