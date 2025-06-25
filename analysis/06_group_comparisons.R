@@ -57,14 +57,15 @@ plot_permanova_df <- read_csv(here("data", "plot_permanova_df.csv"))
 
 ## follow up pairwise tests 
 
-pairwise.adonis2(mFD_results['Species_Richness'] ~ site, data = mFD_results, permutations = 999, by = "margin", method = "euclidean")
+pairwise.adonis2(mFD_results['Species_Richness'] ~ site, data = mFD_results,
+                 permutations = 999, by = "margin", method = "euclidean")
 #A: COR
 #B: FAM, SHR, TUR, DOK
 #C: DOK, EDG, FAM, SHR
 
-pairwise.adonis2(mFD_results['FEve'] ~ site, data = mFD_results, permutations = 999, by = "margin", method = "euclidean")
-# #A: TUR, SHR, COR, EDG, FAM
-# #B: DOK, EDG, FAM
+pairwise.adonis2(mFD_results['FEve'] ~ site, data = mFD_results,
+                 permutations = 999, by = "margin", method = "euclidean")
+# DOK vs.FAM, COR, SHR
 
 mFD_df <- as.data.frame(mFD_results)
 

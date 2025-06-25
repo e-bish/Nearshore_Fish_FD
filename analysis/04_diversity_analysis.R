@@ -114,9 +114,6 @@ summary_stats <- map_dfr(metrics, create_metric_summary_table)
 
 #Species richness 
 
-#test for differences in shoreline condition
-# kruskal.test(Species_Richness ~ipa, data = mFD_results)
-
 mFD_results %>% 
 filter(site == "COR") %>% 
   summarize(min = min(Species_Richness), max= max(Species_Richness), avg = mean(Species_Richness), sd = sd(Species_Richness))
@@ -139,11 +136,6 @@ filter(!site == "COR") %>%
 # pairwise.wilcox.test(mFD_results$Species_Richness, mFD_results$site,
 #                      p.adjust.method = "BH")
 
-
-mFD_results %>% 
-  filter(FEve == min(FEve) | FEve == max(FEve)) %>% 
-  group_by(ipa) %>% 
-  summarize(min = min(Species_Richness), max= max(Species_Richness), avg = mean(Species_Richness), sd = sd(Species_Richness))
 
 #plot with full range
 plot_prep <- mFD_results %>%
