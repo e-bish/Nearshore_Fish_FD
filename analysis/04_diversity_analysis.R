@@ -53,6 +53,7 @@ traits_correlations$"tr_faxes_stat"[which(traits_correlations$"tr_faxes_stat"$"p
 
 trait_plot <- traits_correlations$"tr_faxes_plot"
 
+
 #calculate FD Indices
 alpha_fd_indices <- alpha.fd.multidim(sp_faxes_coord = trait_space[ , c("PC1", "PC2", "PC3")],
                                       asb_sp_w = data.matrix(fish.list$abund),
@@ -93,7 +94,7 @@ mFD_results <- mFD_values %>%
   mutate(ipa = ifelse(ipa == "Natural2", "Natural", ipa)) %>% 
   arrange(shoreline, year)
 
-# save(mFD_results, file = here("data","mFD_results.Rdata")) #last saved 5/30/25 with simplified migrations
+# save(mFD_results, file = here("data","mFD_results.Rdata")) #last saved 6/25/25 
 load(here("data","mFD_results.Rdata"))
 
 ##### summary stats #####
@@ -139,8 +140,8 @@ filter(!site == "COR") %>%
 
 
 mFD_results %>% 
-  filter(FEve == min(FEve) | FEve == max(FEve))
-group_by(ipa) %>% 
+  filter(FEve == min(FEve) | FEve == max(FEve)) %>% 
+  group_by(ipa) %>% 
   summarize(min = min(Species_Richness), max= max(Species_Richness), avg = mean(Species_Richness), sd = sd(Species_Richness))
 
 #plot with full range
@@ -409,7 +410,7 @@ extract_R2_tab <- function(metric){
   rsq_df[1,metric]<- summary(lm(response ~ minus_length[,metric]))$r.squared
   rsq_df[2,metric]<- summary(lm(response ~ minus_mig[,metric]))$r.squared
   rsq_df[3,metric]<- summary(lm(response ~ minus_pos[,metric]))$r.squared
-  rsq_df[4,metric]<- summary(lm(response ~ minus_fd[,metric]))$r.squared
+  rsq_df[4,metric]<- summary(lm(response ~ minus_fg[,metric]))$r.squared
   rsq_df[5,metric]<- summary(lm(response ~ minus_body[,metric]))$r.squared
   
   colnames(rsq_df) <- c("mod", paste0(metric, "_rsq"))
@@ -436,7 +437,7 @@ combined_df <- map_dfc(metrics_short, combine_R2_tabs) %>%
   mutate(trait = c("Body length",
                    "Body transverse shape",
                    "Vertical distribution",
-                   "Migrations",
-                   "Feeding guild"))
+                   "Feeding guild",
+                   "Migrations"))
 
-write_csv(combined_df, here("data", "rsq_contributions.csv"))
+write_csv(combined_df, here("data", "rsq_contributions.csv")) #last saved 6/25/25
