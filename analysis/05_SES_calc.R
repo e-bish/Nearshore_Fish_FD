@@ -96,4 +96,4 @@ colnames(SES_tab)[7:9] <- c("Species_Richness", "SESFRic", "SESFDis")
 
 all(SES_tab$Species_Richness == mFD_results$Species_Richness) #TRUE
 
-save(SES_tab, file = here("data", "SES_tab.Rda"))
+save(SES_tab, file = here("data", "SES_tab.Rdata"))

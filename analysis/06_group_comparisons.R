@@ -15,6 +15,7 @@ source(here("analysis", "group_comparison_functions.R"))
 
 #load data 
 load(here("data","mFD_results.Rdata")) #created in 04_diversity_analysis
+load(here("data", "SES_tab.Rdata")) #created in 05_SES_calc
 metrics <- c("Species_Richness", "SESFRic", "FEve", "FDiv", "SESFDis")
 
 mFD_results <- mFD_results %>% 
@@ -23,7 +24,7 @@ mFD_results <- mFD_results %>%
 #### Permute factors at the shoreline level ####
 
 ## shuffle shorelines to assess site and shoreline condition variables ##
-plot_shuffle <- how(within = Within(type = "series"),
+plot_shuffle <- how(within = Within(type = "free"),
                     plots = Plots(strata = mFD_results$shoreline, type = "free"),
                     nperm = 9999)
 
@@ -36,18 +37,22 @@ plot_shuffle <- how(within = Within(type = "series"),
 int.plot_permanova_list <- map(metrics, calc_int.plot_permanova)
 int.plot_permanova_df <- list_cbind(int.plot_permanova_list, name_repair = "minimal")
 int.plot_permanova_df <- int.plot_permanova_df %>%
-  rownames_to_column(var = "X")
+  rownames_to_column(var = "X") %>% 
+  mutate(across(where(is.numeric), round, 3)) %>% 
+  select(!contains("R2"))
 
-# write_csv(int.plot_permanova_df, here("data", "int.plot_permanova_df.csv"))
+# write_csv(int.plot_permanova_df, here("data", "int.plot_permanova_df.csv")) #last saved 6/25/25
 int.plot_permanova_df <- read_csv(here("data", "int.plot_permanova_df.csv"))
 
 #test single factors 
 plot_permanova_list <- map(metrics, calc_plot_permanova)
 plot_permanova_df <- list_cbind(plot_permanova_list, name_repair = "minimal")
 plot_permanova_df <- plot_permanova_df %>%
-  rownames_to_column(var = "X")
+  rownames_to_column(var = "X") %>% 
+  mutate(across(where(is.numeric), round, 3)) %>% 
+  select(!contains("R2"))
 
-# write_csv(plot_permanova_df, here("data", "plot_permanova_df.csv"))
+# write_csv(plot_permanova_df, here("data", "plot_permanova_df.csv")) #last saved 6/25/25
 plot_permanova_df <- read_csv(here("data", "plot_permanova_df.csv"))
 
 ## follow up pairwise tests 
@@ -121,14 +126,20 @@ site_dispersions_signif <- full_join(site_dispersions, site_signif) %>%
          metric = factor(metric, levels = metrics)) %>% 
   mutate(letters = ifelse(metric == "SESFDis" , NA, letters))
 
-ggplot(data = site_dispersions_signif) +
+site_dispersions_signif %>% 
+  filter(!metric == "Species_Richness") %>% 
+  ggplot() +
   geom_boxplot(aes(x = site, y = value)) +
   geom_point(aes(y = ymax, x = site), color = "white", size = 0) +
   geom_text(aes(label = letters, y = max, x = site), vjust = -0.5) +
   theme_classic() + 
-  labs(y = "Dispersion") +
+  labs(y = "Distance to median", x = "Site") +
   facet_wrap(~metric, ncol = 1, scales = "free")
-  
+
+site_dispersions_signif %>% 
+  filter(site == "FAM" | site == "EDG") %>% 
+  group_by(site, metric) %>% 
+  summarize(mean = mean(value), median = median(value))
 
 #### rda for site ####
 mod1 <- rda(mFD_results[8:11] ~ region, data = mFD_results)
