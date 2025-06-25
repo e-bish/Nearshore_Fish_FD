@@ -123,9 +123,8 @@ milieu <- species(spp_names$Species) %>%
   mutate(migrations = ifelse(migrations == "non-migratory" | is.na(migrations), "resident", "migratory")) %>% 
   mutate(migrations = factor(migrations))
 
-feeding_guild1 <- fooditems(spp_names$Species) 
-
-save(feeding_guild1, file = here("data", "feeding_guild1.Rda")) #save current version in case these hard coded values change later
+# feeding_guild1 <- fooditems(spp_names$Species) #last pulled 6/24/25
+# save(feeding_guild1, file = here("data", "feeding_guild1.Rda")) #save current version in case these hard coded values change later
 load(here("data", "feeding_guild1.Rda"))
 
 manual_check <- feeding_guild1 %>% 

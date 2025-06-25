@@ -42,6 +42,7 @@ round(space_quality$"quality_fspaces",3) #lowest value is the best (<.1 is good)
 #aka the distances in euclidean space are accurately reflecting the gowers distances
 
 trait_space <- space_quality$"details_fspaces"$"sp_pc_coord"
+save(trait_space, file = here("data", "trait_space.Rda"))
 
 #test correlations between traits and axes
 traits_correlations <- traits.faxes.cor(
@@ -381,7 +382,7 @@ calculate_FD <- function(trait_mat, trait_vec) {
   alpha_fd_indices <- alpha.fd.multidim(sp_faxes_coord = trait_space[ , c("PC1", "PC2", "PC3")],
                                         asb_sp_w = data.matrix(fish.list$abund),
                                         ind_vect = c("fdis", "feve", "fric", "fdiv"),
-                                        scaling = TRUE,
+                                        scaling = FALSE,
                                         check_input = TRUE,
                                         details_returned = TRUE)
   
@@ -396,10 +397,10 @@ full_traits <- calculate_FD(fish.list$trait, c("Q", "N", "N", "N", "N"))
 minus_length <- calculate_FD(fish.list$trait[,-1], c("N", "N", "N", "N"))
 minus_body <- calculate_FD(fish.list$trait[,-2], c("Q", "N", "N", "N"))
 minus_pos <- calculate_FD(fish.list$trait[,-3], c("Q", "N", "N", "N"))
-minus_mig <- calculate_FD(fish.list$trait[,-4], c("Q", "N", "N", "N"))
 minus_fg <- calculate_FD(fish.list$trait[,-5], c("Q", "N", "N", "N"))
+minus_mig <- calculate_FD(fish.list$trait[,-4], c("Q", "N", "N", "N"))
 
-mods <- c("minus_length", "minus_body", "minus_pos", "minus_mig", "minus_fd")
+mods <- c("minus_length", "minus_body", "minus_pos", "minus_fg", "minus_mig")
 
 extract_R2_tab <- function(metric){
   
