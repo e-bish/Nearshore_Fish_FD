@@ -57,20 +57,13 @@ pairwise.adonis2(mFD_results['Species_Richness'] ~ site, data = mFD_results, per
 #B: FAM, SHR, TUR, DOK
 #C: DOK, EDG, FAM, SHR
 
-# pairwise.adonis2(mFD_results['FRic'] ~ site, data = mFD_results, permutations = 999, by = "margin", method = "euclidean")
-# #A: COR
-# #B: DOK, EDG
-# #C: EDG, TUR
-# #D: SHR, FAM, TUR
+pairwise.adonis2(mFD_results['FEve'] ~ site, data = mFD_results, permutations = 999, by = "margin", method = "euclidean")
+# #A: TUR, SHR, COR, EDG, FAM
+# #B: DOK, EDG, FAM
 
 mFD_df <- as.data.frame(mFD_results)
 
 pairwise.adonis2(mFD_df['Species_Richness'] ~ year, 
-                 data = mFD_df,
-                 strata = 'shoreline', 
-                 by = "margin", method = "euclidean")
-
-pairwise.adonis2(mFD_df['FRic'] ~ year, 
                  data = mFD_df,
                  strata = 'shoreline', 
                  by = "margin", method = "euclidean")
@@ -126,7 +119,7 @@ site_dispersions_signif <- full_join(site_dispersions, site_signif) %>%
   full_join(range_df) %>% 
   mutate(site = factor(site, levels = c("FAM", "TUR", "COR", "SHR", "DOK", "EDG")),
          metric = factor(metric, levels = metrics)) %>% 
-  mutate(letters = ifelse(metric %in% c("SESFRic", "SESFDis") , NA, letters))
+  mutate(letters = ifelse(metric == "SESFDis" , NA, letters))
 
 ggplot(data = site_dispersions_signif) +
   geom_boxplot(aes(x = site, y = value)) +
@@ -138,7 +131,7 @@ ggplot(data = site_dispersions_signif) +
   
 
 #### rda for site ####
-mod1 <- rda(mFD_results[8:11] ~ ipa + site + year, data = mFD_results)
+mod1 <- rda(mFD_results[8:11] ~ region, data = mFD_results)
 plot(mod1)
 
 rda_scores1 <- scores(mod1)
@@ -167,21 +160,21 @@ site_colors <- rev(c("#8c510a","#d8b365",
                      "lightblue",
                      "#5ab4ac", "#01665e"))
 
-ggplot(data = points1, aes(x = RDA1, y = RDA2)) +
+ggplot(data = points1, aes(x = RDA1, y = PC1)) +
   geom_point(aes(color = site, shape = ipa), size = 3) + 
   stat_ellipse(aes(group = site, color = site),
                linetype = "dashed", show.legend = FALSE) +
-  geom_segment(data=biplot_scores1,
-               aes(x = 0, y = 0, xend=RDA1, yend=RDA2),
-               arrow=arrow(length = unit(0.01, "npc")),
-               lwd=0.75) +
-  geom_text(data=biplot_scores1,
-            aes(x=RDA1*0.9,
-                y=RDA2*0.9,
-                label=metrics[-1]),
-            nudge_x = c(-0.2, -0.3, -0.2, -0.2), 
-            nudge_y = c(0.1, -0.05, 0, 0),
-            size=4) +
+  # geom_segment(data=biplot_scores1,
+  #              aes(x = 0, y = 0, xend=RDA1, yend=RDA2),
+  #              arrow=arrow(length = unit(0.01, "npc")),
+  #              lwd=0.75) +
+  # geom_text(data=biplot_scores1,
+  #           aes(x=RDA1*0.9,
+  #               y=RDA2*0.9,
+  #               label=metrics[-1]),
+  #           nudge_x = c(-0.2, -0.3, -0.2, -0.2), 
+  #           nudge_y = c(0.1, -0.05, 0, 0),
+  #           size=4) +
   scale_color_manual(values = site_colors) +
   labs(shape = "Shoreline Condition", 
        color = "Site") +
@@ -206,3 +199,22 @@ year_disp_pvals <- pmap_dfc(year_arg_list, compare_disp_pval) %>%
   select(!contains("..."))
 #no significant differences between years except FDiv dispersion is lower in 2019 and 2022
 
+##nmds
+nmds <- metaMDS(mFD_results[8:11], 
+                distance="euc", k= 3, trymax=1000, plot = FALSE)
+
+points <- data.frame(nmds$points) %>% 
+  cbind(mFD_results %>% select(site:year)) 
+  # anti_join(add_small_samples_back)
+
+hulls <- points %>%
+  group_by(site) %>% 
+  slice(chull(MDS1,MDS2))
+
+ggplot() +
+  geom_point(data = points, aes(x = MDS1, y = MDS2, color = site, shape = ipa), size = 3) + 
+  geom_text_repel(data = points, aes(x = MDS1, y = MDS2, color = site, label = year), max.overlaps = 20) +
+  # geom_polygon(data = hulls, aes(x = MDS1, y = MDS2, fill = site), alpha = 0.2) +
+  # annotate("text", x = Inf, y = Inf, label = paste("stress = ", S), vjust = 2, hjust = 2) +
+  # annotate("text", x = Inf, y = Inf, label = paste("k = ", K), vjust = 2, hjust = 2) +
+  theme_minimal() 
