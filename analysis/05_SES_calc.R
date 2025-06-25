@@ -10,24 +10,13 @@ fish_L_full <- fish_L_full %>%
 
 null_L <- list(fish_L_full)
 n_iter <- 1000 #observed data + 999 permutations
-#
+
 # #frequency is C4 null model in Gotzenberger et al. that works well for detection of environmental filtering
 # #independentswap seems to be the method that other FD papers have used (e.g., Zhang) and is recommended by Swenson
 for (i in 2:n_iter) {
   set.seed(i)
   null_L[[i]] <- randomizeMatrix(fish_L_full, null.model ="independentswap", iterations = 1000)
 }
-
-# identify_rwfs <- function (df) {
-#   rows_w_few_spp <- df %>%
-#     decostand(method = "pa") %>%
-#     filter(rowSums(.) < 4)
-#   
-#   return(rows_w_few_spp)
-# }
-# 
-# null_L_dfs <- map(null_L, as.data.frame)
-# null_L_rwfs <- map(null_L_dfs, identify_rwfs)
 
 load(here("data", "rows_w_few_spp.Rdata"))
 
@@ -84,6 +73,9 @@ for (i in 1:n_iter){
   FD_null_results <- rbind(FD_null_results, FD_null_df)
 }
 
+#check warning on sample df. all dfs should have the same column and row sums
+# test_war <- colSums(null_L[[15]]) #warnings appear erroneous
+
 colnames(FD_null_results)[2:4] <- c("Species_Richness", "FRic", "FDis")
 
 add_small_samples_back <- rows_w_few_spp %>% 
@@ -108,12 +100,6 @@ FD_null_means <- FD_null_results %>%
          across(where(is.numeric), ~replace_na(., 0))) %>% 
   mutate(ipa = ifelse(ipa == "Natural2", "Natural", ipa)) %>% 
   arrange(shoreline, year)
-
-# FD_means <- mFD_results %>% 
-#   group_by(site) %>% 
-#   summarize(across(where(is.numeric), mean)) %>% 
-#   relocate(FRic,.after = Species_Richness) %>% 
-#   relocate(FDis, .after = FDiv)
 
 SES_tab <- as.data.frame(mFD_results[1:6])
 SES_tab[,7] <- FD_null_means$Species_Richness_mean
