@@ -49,7 +49,6 @@ fish_L_full <- net_core %>% #L is referring to the RLQ analysis
 
 save(fish_L_full, file = here("data", "fish_L_full.Rdata")) #last saved 6/3/25
 
-
 fish_L_sample <- fish_L_full %>% 
   mutate(sample = paste(site, ipa, year, sep = "_"), .after = year) %>% 
   select(!1:3) %>% 
@@ -69,6 +68,9 @@ samples_w_few_spp <- rownames(rows_w_few_spp)
 #remove samples that have less than 4 (this number depends on the number of axes we want to retain for the trait space)
 fish_L <- fish_L_sample %>%
   filter(!rownames(.) %in% samples_w_few_spp)
+
+#check that all species are represented in at least one sample
+colSums(fish_L)
 
 ## create the trait matrix 
 
@@ -102,6 +104,7 @@ spp_names <- spp_names %>%
   filter(!str_detect(ComName, 'UnID'))
 
 write_csv(spp_names, "data/spp_names.csv")
+spp_names <- read_csv(here("data", "spp_names.csv"))
 
 #calculate the mean fork length of each species from the subsamples taken in the field
 fork_length <- net_core %>% 
@@ -120,46 +123,35 @@ milieu <- species(spp_names$Species) %>%
   mutate(migrations = ifelse(migrations == "non-migratory" | is.na(migrations), "resident", "migratory")) %>% 
   mutate(migrations = factor(migrations))
 
-feeding_guild1 <- fooditems(spp_names$Species) %>% 
-  select(Species, FoodI, FoodII, PredatorStage) %>% 
-  group_by(Species, FoodI) %>% 
-  summarize(count = n()) %>% 
-  group_by(Species) %>% 
-  mutate(per =  100 *count/sum(count)) %>% 
-  filter(per >= 60) %>% #classify main food source if more than 60% of diet is in one category
-  inner_join(spp_names) %>% 
-  arrange(ComName) %>% 
-  mutate(feeding_guild = case_when(FoodI == "zoobenthos" ~ "Zoobenthivorous",
-                                   FoodI == "zooplankton" ~ "Planktivorous", 
-                                   FoodI == "nekton" ~ "Piscivorous",
+feeding_guild1 <- fooditems(spp_names$Species) 
+
+save(feeding_guild1, file = here("data", "feeding_guild1.Rda")) #save current version in case these hard coded values change later
+load(here("data", "feeding_guild1.Rda"))
+
+manual_check <- feeding_guild1 %>% 
+  select(Species, FoodI, CommonessII, PredatorStage, Locality2) %>% 
+  slice(11, 56, 68, 97, 
+        130, 161, 209, 458, #recruits,
+        485, 594, 656, 660, 
+        696, 780, 817, 997, 
+        1006, 1032, 1034,
+        1057, 1077, 1100)
+
+omnivores <- feeding_guild1 %>% 
+  filter(!Species %in% manual_check$Species) %>% 
+  distinct(Species) %>% 
+  mutate(FoodI = "omnivorous")
+
+combine_fg <- bind_rows(manual_check, omnivores) %>% 
+  mutate(feeding_guild = case_when(FoodI == "zoobenthos" ~ "zoobenthivorous",
+                                   FoodI == "zooplankton" ~ "planktivorous", 
                                    TRUE ~ FoodI)) %>% 
-  ungroup() %>% 
-  select(Species, feeding_guild) %>% 
-  mutate(feeding_guild = ifelse(Species == "Microgadus proximus", "Zoobenthivorous",feeding_guild)) %>% #juvenile diet
-  mutate(feeding_guild = ifelse(Species == "Ophiodon elongatus", "Planktivorous",feeding_guild)) #juvenile lingcod eat copepods and other small cruscaceans - Fishbase citing Pacific Fishes of Canada
-
-#if food items described don't include a dominant category, classify as omnivorous
-feeding_guild2 <- fooditems(spp_names$Species) %>% 
-  select(Species, FoodI, FoodII, PredatorStage) %>% 
-  group_by(Species, FoodI) %>% 
-  summarize(count = n()) %>% 
-  group_by(Species) %>% 
-  mutate(per = 100 *count/sum(count)) %>% 
-  mutate(category = ifelse(per >= 60, FoodI, NA)) %>% 
-  mutate(onlyNA = all(is.na(category))) %>% 
-  filter(onlyNA == TRUE) %>% 
-  inner_join(spp_names) %>% 
-  select(!c(category, onlyNA)) %>% 
-  mutate(feeding_guild = "Omnivorous") %>% 
-  ungroup() %>% 
-  select(Species, feeding_guild) %>% 
-  distinct() %>% 
-  mutate(feeding_guild = ifelse(Species == "Engraulis mordax", "Planktivorous",feeding_guild)) #phyto and zoo plankton
-
-feeding_guild <- rbind(feeding_guild1, feeding_guild2) %>% 
-  add_row(Species = "Blepsias cirrhosus", feeding_guild = "Zoobenthivorous") %>% #fishbase "Diet"
-  add_row(Species = "Liparis florae", feeding_guild = "Zoobenthivorous")  %>% #based on Liparis pulchellus
-  mutate(feeding_guild = str_to_lower(feeding_guild))
+  full_join(spp_names) %>% 
+  mutate(feeding_guild = case_when(Species == "Blepsias cirrhosus" ~ "zoobenthivorous", #fishbase "Diet"
+                                   Species == "Liparis florae" ~ "zoobenthivorous", #based on Liparis pulchellus
+                                   TRUE ~ feeding_guild)) %>% 
+  select(ComName, Species, feeding_guild) %>% 
+  arrange(ComName)
 
 #chinook are omnivorous - duffy et al. 2010
 #chinook and chum in eelgrass mostly eat epifaunal invertebrates - Kennedy et al. 2018
@@ -167,11 +159,11 @@ feeding_guild <- rbind(feeding_guild1, feeding_guild2) %>%
 
 fish_traits <- full_join(fork_length, milieu) %>% 
   select(3,1,2,4,5,6) %>% 
-  left_join(feeding_guild) %>% 
+  left_join(combine_fg) %>% 
   mutate(ComName = replace(ComName, ComName == "Pacific Sandfish", "Pacific sandfish")) %>%
   arrange(ComName)
 
-write_csv(fish_traits, "data/fish_traits.csv") #last saved 6/3/25
+write_csv(fish_traits, "data/fish_traits.csv") #last saved 6/25/25
 
 fish_Q <- fish_traits %>% 
   select(-c(Species, ComName)) %>% 
@@ -209,4 +201,4 @@ fish.list <- list("trait" = fish_Q,
                   "abund" = fish_L,
                   "meta" = fish_meta) 
 
-save(fish.list, file = here("data", "fish.list.Rdata")) #last saved 6/3/25
+save(fish.list, file = here("data", "fish.list.Rdata")) #last saved 6/25/25
