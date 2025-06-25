@@ -6,13 +6,6 @@ library(RColorBrewer)
 #load abundance and trait data
 load(here("data", "fish.list.Rdata"))
 
-fish.list$trait <- fish.list$trait %>%
-  mutate(migrations = ifelse(migrations == "non-migratory", "resident", "migratory")) %>% 
-  mutate(migrations = factor(migrations))
-
-# fish.list$trait <- fish.list$trait %>%
-#   select(!migrations)
-
 SOS_core_sites <- factor(c("FAM", "TUR", "COR", "SHR", "DOK", "EDG"), 
                          levels = c("FAM", "TUR", "COR", "SHR", "DOK", "EDG"))
 
@@ -20,8 +13,6 @@ SOS_core_sites <- factor(c("FAM", "TUR", "COR", "SHR", "DOK", "EDG"),
 fish_cwm <- functcomp(x = fish.list$trait,
                       a = as.matrix(fish.list$abund),
                       CWM.type = "dom")
-
-
 
 fish_cwm_df <- fish_cwm %>% 
   rownames_to_column( "sample") %>% 
