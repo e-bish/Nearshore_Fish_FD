@@ -1,29 +1,35 @@
 library(tidyverse)
 library(here)
 library(vegan)
+library(pairwiseAdonis)
 
+set.seed(2025)
 load(here("data", "fish_L_full.Rdata"))
 
 fish_L_full <- fish_L_full %>% 
-  mutate(ipa = ifelse(ipa == "Natural2", "Natural", ipa))
-
-#### rda for site ####
-fish_L_full <- fish_L_full %>% 
+  mutate(ipa = ifelse(ipa == "Natural2", "Natural", ipa)) %>% 
   mutate(site = factor(site, levels = c("FAM", "TUR", "COR", "SHR", "DOK", "EDG")),
          ipa = factor(ipa, levels = c("Natural",
                                       "Armored",
                                       "Restored")))
 
-mod1 <- dbrda(fish_L_full[4:45] ~ ipa + site + year, 
-              data = fish_L_full, distance = "bray")
+#### rda for site ####
+fish_dist <- vegdist(sqrt(fish_L_full[4:45]), method = "bray")
 
-anova(mod1, by = "margin")
+mod1 <- dbrda(fish_dist ~ ipa + site + year, 
+              data = fish_L_full)
 
-pairwise.adonis2(fish_L_full[4:45] ~ site, 
-                 data = mFD_results, distance = "bray")
+anova(mod1, by = "margin", model = "reduced", permutations = 9999)
 
-plot(mod1)
+pairwise.adonis2(fish_dist ~ site, 
+                 data = fish_L_full, by = "margin")
 
+site_beta <- betadisper(vegdist(fish_dist), 
+                     group = fish_L_full$site, type = "median")
+
+permutest(site_beta, pairwise = TRUE)
+
+#visualize the ordination
 rda_scores1 <- scores(mod1)
 sites_scores1 <- as.data.frame(rda_scores1$sites)
 biplot_scores1 <- as.data.frame(rda_scores1$biplot) %>% 

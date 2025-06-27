@@ -21,6 +21,83 @@ metrics <- c("Species_Richness", "SESFRic", "FEve", "FDiv", "SESFDis")
 mFD_results <- mFD_results %>% 
  inner_join(SES_tab)
 
+#### visualize differences ####
+######################
+
+#### FD by site ####
+mFD_results %>% 
+  pivot_longer(!c(site, ipa, year, shoreline, region, veg), names_to = "metric", values_to = "value") %>% 
+  ggplot(aes(x = site, y = value, fill = site)) +
+  geom_boxplot() +
+  geom_point(show.legend = FALSE) +
+  theme_classic() +
+  facet_wrap(~factor(metric, levels = c("Species_Richness", "FDis", "FRic", "FEve", "FDiv"),
+                     labels = c("Species Richness", "FDis", "FRic", "FEve", "FDiv")),
+             scales = "free_y") + 
+  labs(x = "Site", y = "Value") + 
+  scale_fill_manual(values = site_colors) +
+  theme(strip.background = element_rect(fill = NA, colour = NA))
+
+
+#### figure S2, FD by ipa ####
+mFD_results %>% 
+  pivot_longer(!c(site, ipa, year, shoreline, region, veg), names_to = "metric", values_to = "value") %>% 
+  ggplot(aes(x = ipa, y = value)) +
+  geom_boxplot() +
+  geom_point(aes(color = site)) +
+  theme_classic() +
+  facet_wrap(~factor(metric, levels = c("Species_Richness", "FDis", "FRic", "FEve", "FDiv"),
+                     labels = c("Species Richness", "FDis", "FRic", "FEve", "FDiv")),
+             scales = "free_y") + 
+  labs(x = "Condition category", y = "Value") + 
+  scale_color_manual(values = site_colors) +
+  theme(strip.background = element_rect(fill = NA, colour = NA))
+# 
+# ggsave(here("figures", "figure_S2.png"), 
+#        width = 8, height = 6, dpi = 300) 
+
+#### FD by year ####
+mFD_results %>% 
+  pivot_longer(!c(site, ipa, year, shoreline, region, veg), names_to = "metric", values_to = "value") %>% 
+  ggplot(aes(x = year, y = value)) +
+  geom_boxplot() +
+  geom_point(aes(color = site)) +
+  theme_classic() +
+  facet_wrap(~factor(metric, levels = c("Species_Richness", "FDis", "FRic", "FEve", "FDiv"),
+                     labels = c("Species Richness", "FDis", "FRic", "FEve", "FDiv")),
+             scales = "free_y") + 
+  scale_color_manual(values = site_colors) +
+  labs(x = "Condition category", y = "Value") + 
+  theme(strip.background = element_rect(fill = NA, colour = NA))
+
+#### FD by region ####
+# mFD_results %>% 
+#   pivot_longer(!c(site, ipa, year, shoreline, region, veg), names_to = "metric", values_to = "value") %>% 
+#   ggplot(aes(x = region, y = value)) +
+#   geom_boxplot() +
+#   geom_point(aes(color = site)) +
+#   theme_classic() +
+#   facet_wrap(~factor(metric, levels = c("Species_Richness", "FDis", "FRic", "FEve", "FDiv"),
+#                      labels = c("Species Richness", "FDis", "FRic", "FEve", "FDiv")),
+#              scales = "free_y") + 
+#   scale_color_manual(values = site_colors) +
+#   labs(x = "Region", y = "Value") + 
+#   theme(strip.background = element_rect(fill = NA, colour = NA))
+# 
+# #### FD by veg ####
+# mFD_results %>% 
+#   pivot_longer(!c(site, ipa, year, shoreline, region, veg), names_to = "metric", values_to = "value") %>% 
+#   ggplot(aes(x = veg, y = value)) +
+#   geom_boxplot() +
+#   geom_point(aes(color = site)) +
+#   theme_classic() +
+#   facet_wrap(~factor(metric, levels = c("Species_Richness", "FDis", "FRic", "FEve", "FDiv"),
+#                      labels = c("Species Richness", "FDis", "FRic", "FEve", "FDiv")),
+#              scales = "free_y") + 
+#   scale_color_manual(values = site_colors) +
+#   labs(x = "Eelgrass", y = "Value") + 
+#   theme(strip.background = element_rect(fill = NA, colour = NA))
+
 #### Permute factors at the shoreline level ####
 
 ## shuffle shorelines to assess site and shoreline condition variables ##
@@ -162,6 +239,10 @@ year_disp_pvals <- pmap_dfc(year_arg_list, compare_disp_pval) %>%
   rename(pairs = "pair...1") %>% 
   select(!contains("..."))
 #no significant differences between years except FDiv dispersion is lower in 2019 and 2022
+
+
+
+
 
 ##nmds
 nmds <- metaMDS(fish_L_full[4:45], 
