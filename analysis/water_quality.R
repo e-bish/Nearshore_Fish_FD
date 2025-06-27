@@ -147,13 +147,15 @@ compare_COR_temp <- wq_tb %>%
 #   labs(y = "Mean value", x = "Month", color = "Site", shape = "Shoreline\nCondition")
   
 
-# wq_tb_export <- wq_tb %>% 
-#   pivot_longer(c(secchi_depth_m, do_mg_l, salinity_ppm, temperature), names_to = "metric") %>% 
-#   group_by(site, metric) %>% 
-#   summarize(mean = round(mean(value, na.rm = TRUE), 2), min = min(value, na.rm = TRUE), max = max(value, na.rm = TRUE)) %>% 
-#   ungroup() %>% 
-#   mutate(value = paste0(mean, " (", min, "-", max, ")")) %>% 
-#   select(site, metric, value) %>% 
-#   pivot_wider(names_from = metric, values_from = value)
-# 
+wq_tb_prep <- wq_tb %>%
+  pivot_longer(c(secchi_depth_m, do_mg_l, salinity_ppm, temperature), names_to = "metric") %>%
+  group_by(shoreline, metric) %>%
+  summarize(mean = round(mean(value, na.rm = TRUE), 2), min = min(value, na.rm = TRUE), max = max(value, na.rm = TRUE)) %>%
+  ungroup() 
+
+wq_tb_export <- wq_tb_prep %>%
+  mutate(value = paste0(mean, " (", min, "-", max, ")")) %>%
+  select(site, metric, value) %>%
+  pivot_wider(names_from = metric, values_from = value)
+
 # write_csv(wq_tb_export, file = here("data", "wq_tb.csv"))
