@@ -2,8 +2,10 @@ library(tidyverse)
 library(here)
 library(mFD)
 library(picante)
+library(DescTools)
 
-load(here("data", "fish_L_full.Rdata"))
+load(here("data", "fish_L_full.Rdata")) #created in 03_create_matrices
+load(here("data","mFD_results.Rdata")) #created in 04_diversity_analysis
 
 fish_L_full <- fish_L_full %>% 
   mutate(sample = paste(site, ipa, year, sep = "_"), .after = year) %>% 
@@ -62,6 +64,46 @@ for (i in 1:n_iter){
 
 colnames(FD_null_results)[2:4] <- c("Species_Richness", "FRic", "FDis")
 
+hist(FD_null_results$FRic)
+hist(sqrt(FD_null_results$FRic))
+Skew(sqrt(FD_null_results$FRic))
+
+hist(FD_null_results$FDis)
+Skew(FD_null_results$FDis)
+
+#check skewness of the null distributions
+
+check_skew <- function(metric, trans) {
+  
+  samples <- FD_null_results %>% 
+    select(sample) %>% 
+    distinct() %>% 
+    pull(sample)
+  
+  skew_vals <- c()
+  
+  if (trans == FALSE) {
+    for (i in samples) {
+      df <- FD_null_results %>% 
+        filter(sample == i)  
+      
+      skew_vals[i] <- Skew(df[[metric]])
+    }
+  } else {
+    for (i in samples) {
+      df <- FD_null_results %>% 
+        filter(sample == i)  
+      
+      skew_vals[i] <- Skew(sqrt(df[[metric]]))
+    }
+  }
+  return(boxplot(skew_vals))
+}
+
+check_skew("FRic", trans = FALSE) #transformation needed 
+check_skew("FRic", trans = TRUE)
+check_skew("FDis", trans = FALSE) #no transformation needed (skew values between -1 & 1)
+
 add_small_samples_back <- rows_w_few_spp %>% 
   rownames_to_column(var = "sample") %>% 
   separate_wider_delim(sample, delim = "_", names = c("site", "ipa", "year")) %>% 
@@ -87,7 +129,7 @@ FD_null_means <- FD_null_results %>%
 
 SES_tab <- as.data.frame(mFD_results[1:6])
 SES_tab[,7] <- FD_null_means$Species_Richness_mean
-SES_tab[,8] <- (mFD_results$FRic - FD_null_means$FRic_mean) / FD_null_means$FRic_sd
+SES_tab[,8] <- (sqrt(mFD_results$FRic) - sqrt(FD_null_means$FRic_mean)) / sqrt(FD_null_means$FRic_sd)
 SES_tab[,9] <- (mFD_results$FDis - FD_null_means$FDis_mean) / FD_null_means$FDis_sd
 
 SES_tab[is.na(SES_tab)] <- 0
