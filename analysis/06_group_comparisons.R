@@ -41,7 +41,7 @@ int.plot_permanova_df <- int.plot_permanova_df %>%
   mutate(across(where(is.numeric), round, 3)) %>% 
   select(!contains("R2"))
 
-# write_csv(int.plot_permanova_df, here("data", "int.plot_permanova_df.csv")) #last saved 6/25/25
+# write_csv(int.plot_permanova_df, here("data", "int.plot_permanova_df.csv")) #last saved 6/27/25
 int.plot_permanova_df <- read_csv(here("data", "int.plot_permanova_df.csv"))
 
 #test single factors 
@@ -52,27 +52,29 @@ plot_permanova_df <- plot_permanova_df %>%
   mutate(across(where(is.numeric), round, 3)) %>% 
   select(!contains("R2"))
 
-# write_csv(plot_permanova_df, here("data", "plot_permanova_df.csv")) #last saved 6/25/25
+# write_csv(plot_permanova_df, here("data", "plot_permanova_df.csv")) #last saved 6/27/25
 plot_permanova_df <- read_csv(here("data", "plot_permanova_df.csv"))
 
 ## follow up pairwise tests 
 
 pairwise.adonis2(mFD_results['Species_Richness'] ~ site, data = mFD_results,
                  permutations = 999, by = "margin", method = "euclidean")
-#A: COR
-#B: FAM, SHR, TUR, DOK
-#C: DOK, EDG, FAM, SHR
+#COR v DOK, EDG, FAM, SHR, TUR
+#DOK & EDG v TUR
+
 
 pairwise.adonis2(mFD_results['FEve'] ~ site, data = mFD_results,
                  permutations = 999, by = "margin", method = "euclidean")
-# DOK vs.FAM, COR, SHR
+# DOK vs.FAM, COR, TUR, SHR
 
-mFD_df <- as.data.frame(mFD_results)
-
-pairwise.adonis2(mFD_df['Species_Richness'] ~ year, 
-                 data = mFD_df,
-                 strata = 'shoreline', 
+pairwise.adonis2(mFD_results['Species_Richness'] ~ year, 
+                 data = mFD_results,
                  by = "margin", method = "euclidean")
+#2018 v 2022
+
+pairwise.adonis2(mFD_results['SESFRic'] ~ year, data = mFD_results,
+                 permutations = 999, by = "margin", method = "euclidean")
+#2018 & 2022 v 2019
 
 # dispersion between shoreline conditions
 ipa_dispersions <- mFD_results %>% 
@@ -142,56 +144,6 @@ site_dispersions_signif %>%
   group_by(site, metric) %>% 
   summarize(mean = mean(value), median = median(value))
 
-#### rda for site ####
-mod1 <- rda(mFD_results[8:11] ~ region, data = mFD_results)
-plot(mod1)
-
-rda_scores1 <- scores(mod1)
-sites_scores1 <- as.data.frame(rda_scores1$sites)
-biplot_scores1 <- as.data.frame(rda_scores1$species)
-
-# gg_ordiplot(ord = biplot_scores1, #for some reason the scale gets weird if you don't specify this
-#             groups = mFD_results$site,
-#             ellipse = TRUE,
-#             hull = FALSE,
-#             spiders = FALSE)
-# 
-# gg_ordiplot(ord = biplot_scores2, #for some reason the scale gets weird if you don't specify this
-#             groups = mFD_sub$site,
-#             ellipse = TRUE,
-#             hull = FALSE,
-#             spiders = FALSE)
-
-points1 <- sites_scores1 %>% 
-  cbind(mFD_results %>% select(site:year))
-
-site_colors <- rev(c("#8c510a","#d8b365", 
-                     # "#f6e8c1",
-                     "lightgoldenrod",
-                     # "#c7eae8",
-                     "lightblue",
-                     "#5ab4ac", "#01665e"))
-
-ggplot(data = points1, aes(x = RDA1, y = PC1)) +
-  geom_point(aes(color = site, shape = ipa), size = 3) + 
-  stat_ellipse(aes(group = site, color = site),
-               linetype = "dashed", show.legend = FALSE) +
-  # geom_segment(data=biplot_scores1,
-  #              aes(x = 0, y = 0, xend=RDA1, yend=RDA2),
-  #              arrow=arrow(length = unit(0.01, "npc")),
-  #              lwd=0.75) +
-  # geom_text(data=biplot_scores1,
-  #           aes(x=RDA1*0.9,
-  #               y=RDA2*0.9,
-  #               label=metrics[-1]),
-  #           nudge_x = c(-0.2, -0.3, -0.2, -0.2), 
-  #           nudge_y = c(0.1, -0.05, 0, 0),
-  #           size=4) +
-  scale_color_manual(values = site_colors) +
-  labs(shape = "Shoreline Condition", 
-       color = "Site") +
-  theme_minimal() 
-
 # dispersion between years
 year_dispersions <- mFD_results %>% 
   select(site:year) %>% 
@@ -212,8 +164,28 @@ year_disp_pvals <- pmap_dfc(year_arg_list, compare_disp_pval) %>%
 #no significant differences between years except FDiv dispersion is lower in 2019 and 2022
 
 ##nmds
-nmds <- metaMDS(mFD_results[8:11], 
-                distance="euc", k= 3, trymax=1000, plot = FALSE)
+nmds <- metaMDS(fish_L_full[4:45], 
+                distance="bray", k= 3, trymax=1000, plot = FALSE)
+
+wq_tb_exp <- wq_tb_prep %>% 
+  mutate(site = str_sub(shoreline, 1, 3),
+         ipa = str_sub(shoreline, 4), .before = shoreline) %>% 
+  select(!c(shoreline,min,max)) %>% 
+  pivot_wider(names_from = metric, values_from = mean)
+
+load(here("data", "fish_L_full.Rdata"))
+
+fish_L_full <- fish_L_full %>% 
+  full_join(wq_tb_exp) %>% 
+  mutate(ipa = ifelse(ipa == "Natural2", "Natural", ipa))
+  
+#   mutate(region = ifelse(site %in% c("FAM", "TUR", "COR"), "North", "South"), 
+#           veg = ifelse(site %in% c("TUR", "COR", "SHR"), "present", "absent"), .after = year)
+
+env.test <- envfit(nmds, fish_L_full[c(46,47,48,49)], permutations = 9999)
+env.test 
+
+wq_vecs <- as.data.frame(scores(env.test, "vectors")) * ordiArrowMul(env.test)
 
 points <- data.frame(nmds$points) %>% 
   cbind(mFD_results %>% select(site:year)) 
@@ -225,8 +197,19 @@ hulls <- points %>%
 
 ggplot() +
   geom_point(data = points, aes(x = MDS1, y = MDS2, color = site, shape = ipa), size = 3) + 
-  geom_text_repel(data = points, aes(x = MDS1, y = MDS2, color = site, label = year), max.overlaps = 20) +
-  # geom_polygon(data = hulls, aes(x = MDS1, y = MDS2, fill = site), alpha = 0.2) +
+  # geom_text_repel(data = points, aes(x = MDS1, y = MDS2, color = site, label = year), max.overlaps = 20) +
+  geom_polygon(data = hulls, aes(x = MDS1, y = MDS2, fill = site), alpha = 0.2) +
   # annotate("text", x = Inf, y = Inf, label = paste("stress = ", S), vjust = 2, hjust = 2) +
   # annotate("text", x = Inf, y = Inf, label = paste("k = ", K), vjust = 2, hjust = 2) +
+   geom_segment(aes(x = 0, y = 0, xend = NMDS1, yend = NMDS2), 
+               data = wq_vecs, linewidth =1) +
+  geom_text(data = wq_vecs, aes(x = NMDS1, y = NMDS2), colour = "grey30", 
+            fontface = "bold", label = row.names(wq_vecs)) +
+  scale_color_manual(values = site_colors) +
+  scale_fill_manual(values = site_colors) +
   theme_minimal() 
+
+simper_site <- simper(comm = fish_L_full[4:45], 
+       group = fish_L_full$site, 
+       permutations = 9999)
+summary(simper_site)
