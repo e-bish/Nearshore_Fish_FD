@@ -19,56 +19,115 @@ load(here("data", "SES_tab.Rdata")) #created in 05_SES_calc
 metrics <- c("Species_Richness", "SESFRic", "FEve", "FDiv", "SESFDis")
 
 mFD_results <- mFD_results %>% 
- inner_join(SES_tab)
+ inner_join(SES_tab) 
+
+mFD_results_long <- mFD_results %>% 
+  pivot_longer(!c(site, ipa, year, shoreline, region, veg), names_to = "metric", values_to = "value") %>% 
+  filter(!metric %in% c("Species_Richness", "FRic", "FDis")) %>% 
+  mutate(metric = factor(metric, levels = c("SESFRic", "FEve", "FDiv", "SESFDis"),
+         labels = c("SESFRic", "FEve", "FDiv", "SESFDis")))
 
 #### visualize differences ####
-######################
 
-#### FD by site ####
-mFD_results %>% 
-  pivot_longer(!c(site, ipa, year, shoreline, region, veg), names_to = "metric", values_to = "value") %>% 
-  ggplot(aes(x = site, y = value, fill = site)) +
-  geom_boxplot() +
-  geom_point(show.legend = FALSE) +
-  theme_classic() +
-  facet_wrap(~factor(metric, levels = c("Species_Richness", "FDis", "FRic", "FEve", "FDiv"),
-                     labels = c("Species Richness", "FDis", "FRic", "FEve", "FDiv")),
-             scales = "free_y") + 
-  labs(x = "Site", y = "Value") + 
-  scale_fill_manual(values = site_colors) +
-  theme(strip.background = element_rect(fill = NA, colour = NA))
+# plot with means
+# mFD_averages <- mFD_results %>% 
+#   pivot_longer(!c(shoreline, site, ipa, year, region, veg), names_to = "metric", values_to = "value") %>% 
+#   group_by(site, ipa, shoreline, metric) %>% 
+#   summarize(mean = mean(value), sd = sd(value), max = max(value), min = min(value)) %>% 
+#   filter(!metric %in% c("Species_Richness", "FRic", "FDis"))
+# 
+# plot_prep <- mFD_results %>%
+#   mutate(ipa2 = ifelse(shoreline == "TURN2", "alt", "no_alt")) %>% 
+#   group_by(site, ipa, ipa2) %>% 
+#   mutate(id = factor(cur_group_id())) %>%
+#   ungroup() %>% 
+#   pivot_longer(!c(shoreline, site, ipa, ipa2, year, region, veg, id), 
+#                names_to = "metric", values_to = "value") %>%
+#   group_by(site, ipa, id, metric) %>% 
+#   summarize(avg = mean(value), min = min(value), max = max(value)) %>% 
+#   ungroup() %>% 
+#   filter(!metric %in% c("Species_Richness", "FRic", "FDis"))
+# 
+# site_colors <- rev(c("#8c510a","#d8b365", 
+#                      # "#f6e8c1",
+#                      "lightgoldenrod",
+#                      # "#c7eae8",
+#                      "lightblue",
+#                      "#5ab4ac", "#01665e"))
+# 
+# plot_prep %>% 
+#   ggplot(aes(x = id, y = avg, color = site, shape = ipa), show.legend = TRUE) +
+#   geom_point(size = 3) +
+#   geom_linerange(aes(ymin=min,ymax=max),linetype=1, show.legend = FALSE)+
+#   theme_classic() +
+#   theme(axis.text.x = element_text(angle = 60, vjust = 0.75, hjust=1),
+#         legend.box = "horizontal", 
+#         legend.title = element_text(hjust = 0.5),
+#         strip.placement = "outside",
+#         strip.text.x = element_text(size = 10),
+#         strip.background = element_rect(fill = NA,
+#                                         colour = NA)) +
+#   scale_color_manual(values = site_colors) +
+#   labs(x = "Shoreline ID", y = "Value", color = "Site", shape = "Shoreline\ntype") +
+#   facet_wrap(~metric, 
+#              scales = "free_y", axes = "all_x", axis.labels = "margins")
+# 
+# layout <- '
+# AB
+# CC
+# '
+# 
+# free(p1) + guide_area() + p2 + 
+#   plot_layout(guides = 'collect', 
+#               design = layout,
+#               heights = c(1.1,2)) &
+#   theme(legend.direction = 'vertical',
+#         legend.box = 'horizontal')
+# # 
+# ggsave(here("figures", "figure_3.png"), 
+#        width = 8, height = 6, dpi = 300) 
 
 
 #### figure S2, FD by ipa ####
-mFD_results %>% 
-  pivot_longer(!c(site, ipa, year, shoreline, region, veg), names_to = "metric", values_to = "value") %>% 
+ipa_FD <- mFD_results_long %>% 
   ggplot(aes(x = ipa, y = value)) +
   geom_boxplot() +
-  geom_point(aes(color = site)) +
+  geom_point(alpha = 0.4, size = 2, show.legend = FALSE) +
   theme_classic() +
-  facet_wrap(~factor(metric, levels = c("Species_Richness", "FDis", "FRic", "FEve", "FDiv"),
-                     labels = c("Species Richness", "FDis", "FRic", "FEve", "FDiv")),
-             scales = "free_y") + 
-  labs(x = "Condition category", y = "Value") + 
+  labs(x = "Condition category", y = "Value", color = "Site") + 
   scale_color_manual(values = site_colors) +
-  theme(strip.background = element_rect(fill = NA, colour = NA))
+  theme(strip.background = element_rect(fill = NA, colour = NA)) +
+  facet_wrap(~ metric, scales = "free_y", nrow = 1) 
 # 
 # ggsave(here("figures", "figure_S2.png"), 
 #        width = 8, height = 6, dpi = 300) 
 
+#### FD by site ####
+site_FD <- mFD_results_long %>% 
+  ggplot(aes(x = site, y = value, fill = site)) +
+  geom_boxplot() +
+  geom_point(alpha = 0.4, size = 2, show.legend = FALSE) +
+  theme_classic() +
+  labs(x = "Site", y = "Value", fill = "Site") + 
+  scale_fill_manual(values = site_colors) +
+  theme(strip.background = element_rect(fill = NA, colour = NA)) +
+  facet_wrap(~metric, scales = "free_y", nrow = 1)
+
 #### FD by year ####
-mFD_results %>% 
-  pivot_longer(!c(site, ipa, year, shoreline, region, veg), names_to = "metric", values_to = "value") %>% 
+year_FD <- mFD_results_long %>% 
   ggplot(aes(x = year, y = value)) +
   geom_boxplot() +
-  geom_point(aes(color = site)) +
+  geom_point(alpha = 0.4, size = 2, show.legend = FALSE) +
   theme_classic() +
-  facet_wrap(~factor(metric, levels = c("Species_Richness", "FDis", "FRic", "FEve", "FDiv"),
-                     labels = c("Species Richness", "FDis", "FRic", "FEve", "FDiv")),
-             scales = "free_y") + 
   scale_color_manual(values = site_colors) +
-  labs(x = "Condition category", y = "Value") + 
-  theme(strip.background = element_rect(fill = NA, colour = NA))
+  labs(x = "Year", y = "Value") + 
+  theme(strip.background = element_rect(fill = NA, colour = NA)) +
+  facet_wrap(~metric, scales = "free_y", nrow = 1) 
+
+library(patchwork)
+
+ipa_FD / site_FD / year_FD + plot_layout(guides = "collect")
+
 
 #### FD by region ####
 # mFD_results %>% 
