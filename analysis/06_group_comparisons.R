@@ -38,18 +38,6 @@ mFD_results_long <- mFD_results %>%
 #### summarize values ####
 
 ##### summary stats #####
-create_metric_summary_table <- function(metric_ID) {
-  tmp <- mFD_results %>% 
-    summarize(min = min(.data[[metric_ID]]), 
-              max = max(.data[[metric_ID]]), 
-              avg = mean(.data[[metric_ID]]), 
-              sd = sd(.data[[metric_ID]])) %>% 
-    mutate(metric = metric_ID)
-  
-  return(tmp)
-}
-
-summary_stats <- map_dfr(metrics, create_metric_summary_table)
 
 #Species richness 
 
@@ -60,15 +48,6 @@ mFD_results %>%
 mFD_results %>% 
   filter(!site == "COR") %>% 
   summarize(min = min(Species_Richness), max= max(Species_Richness), avg = mean(Species_Richness), sd = sd(Species_Richness))
-
-mFD_results %>% 
-  group_by(region) %>% 
-  summarize(min = min(Species_Richness), max= max(Species_Richness), avg = mean(Species_Richness), sd = sd(Species_Richness))
-
-mFD_results %>% 
-  group_by(veg) %>% 
-  summarize(min = min(Species_Richness), max= max(Species_Richness), avg = mean(Species_Richness), sd = sd(Species_Richness))
-
 
 #### visualize differences ####
 
