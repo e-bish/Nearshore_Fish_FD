@@ -13,6 +13,8 @@ library(patchwork)
 set.seed(2025)
 
 load(here("data", "fish.list.Rdata"))
+metrics <- c("Species_Richness", "FRic", "FEve", "FDiv", "FDis")
+
 
 #### run with mFD ####
 traits_cat <- data.frame(trait_name = colnames(fish.list$trait),
@@ -67,8 +69,6 @@ alpha_fd_indices <- alpha.fd.multidim(sp_faxes_coord = trait_space[ , c("PC1", "
 
 mFD_values <- alpha_fd_indices$"functional_diversity_indices"
 
-metrics <- c("Species_Richness", "FRic", "FEve", "FDiv", "FDis")
-
 colnames(mFD_values)[1:5] <- metrics
 
 load(here("data", "rows_w_few_spp.Rdata"))
@@ -98,7 +98,6 @@ mFD_results <- mFD_values %>%
 # save(mFD_results, file = here("data","mFD_results.Rdata")) #last saved 6/25/25 
 load(here("data","mFD_results.Rdata"))
 
-##### summary stats #####
 create_metric_summary_table <- function(metric_ID) {
   tmp <- mFD_results %>% 
     summarize(min = min(.data[[metric_ID]]), 
@@ -111,31 +110,6 @@ create_metric_summary_table <- function(metric_ID) {
 }
 
 summary_stats <- map_dfr(metrics, create_metric_summary_table)
-
-#Species richness 
-
-mFD_results %>% 
-filter(site == "COR") %>% 
-  summarize(min = min(Species_Richness), max= max(Species_Richness), avg = mean(Species_Richness), sd = sd(Species_Richness))
-
-mFD_results %>% 
-filter(!site == "COR") %>% 
-  summarize(min = min(Species_Richness), max= max(Species_Richness), avg = mean(Species_Richness), sd = sd(Species_Richness))
-
-
-# #test for differences in sites
-# shapiro.test(mFD_results$Species_Richness) #significant p value, meaning data does not meet the assumption of normality
-# hist(log(mFD_results$Species_Richness))
-# shapiro.test(log(mFD_results$Species_Richness))
-# kruskal.test(Species_Richness ~ site, data = mFD_results)
-# 
-# mFD_results %>% 
-#   group_by(site) %>% 
-#   summarize(min = min(Species_Richness), max= max(Species_Richness), avg = mean(Species_Richness), sd = sd(Species_Richness))
-# 
-# pairwise.wilcox.test(mFD_results$Species_Richness, mFD_results$site,
-#                      p.adjust.method = "BH")
-
 
 #plot with full range
 plot_prep <- mFD_results %>%
@@ -194,81 +168,6 @@ free(p1) + guide_area() + p2 +
               heights = c(1.1,2)) &
   theme(legend.direction = 'vertical',
         legend.box = 'horizontal')
-
-#### Figure 3 ###
-# plot with means
-mFD_averages <- mFD_results %>% 
-  pivot_longer(!c(shoreline, site, ipa, year, region, veg), names_to = "metric", values_to = "value") %>% 
-  group_by(site, ipa, shoreline, metric) %>% 
-  summarize(mean = mean(value), sd = sd(value), max = max(value), min = min(value))
-
-plot_prep <- mFD_results %>%
-  mutate(ipa2 = ifelse(shoreline == "TURN2", "alt", "no_alt")) %>% 
-  group_by(site, ipa, ipa2) %>% 
-  mutate(id = factor(cur_group_id())) %>%
-  ungroup() %>% 
-  pivot_longer(!c(shoreline, site, ipa, ipa2, year, region, veg, id), 
-               names_to = "metric", values_to = "value") %>%
-  group_by(site, ipa, id, metric) %>% 
-  summarize(avg = mean(value), min = min(value), max = max(value)) %>% 
-  ungroup() 
-
-site_colors <- rev(c("#8c510a","#d8b365", 
-                     # "#f6e8c1",
-                     "lightgoldenrod",
-                     # "#c7eae8",
-                     "lightblue",
-                     "#5ab4ac", "#01665e"))
-
-p1 <- plot_prep %>% 
-  filter(metric == "Species_Richness") %>% 
-  ggplot(aes(x = id, y = avg, color = site, shape = ipa), show.legend = TRUE) +
-  geom_point(size = 3) +
-  geom_linerange(aes(ymin=min,ymax=max),linetype=1, show.legend = FALSE)+
-  theme_classic() +
-  theme(axis.text.x = element_blank(),
-        axis.title.x=element_blank(),
-        # axis.text.x = element_text(angle = 60, vjust = 0.75, hjust=1),
-        legend.box = "horizontal", 
-        legend.title = element_text(hjust = 0.5),
-        plot.title = element_text(hjust = 0.5, size = 10)) +
-  scale_color_manual(values = site_colors) +
-  labs(title = "Species Richness", 
-       # x = "Shoreline ID", 
-       y = "Value", color = "Site", shape = "Shoreline\ntype") 
-
-p2 <- plot_prep %>% 
-  filter(!metric == "Species_Richness") %>% 
-  ggplot(aes(x = id, y = avg, color = site, shape = ipa), show.legend = TRUE) +
-  geom_point(size = 3) +
-  geom_linerange(aes(ymin=min,ymax=max),linetype=1, show.legend = FALSE)+
-  theme_classic() +
-  theme(axis.text.x = element_text(angle = 60, vjust = 0.75, hjust=1),
-        legend.box = "horizontal", 
-        legend.title = element_text(hjust = 0.5),
-        strip.placement = "outside",
-        strip.text.x = element_text(size = 10),
-        strip.background = element_rect(fill = NA,
-                                        colour = NA)) +
-  scale_color_manual(values = site_colors) +
-  labs(x = "Shoreline ID", y = "Value", color = "Site", shape = "Shoreline\ntype") +
-  facet_wrap(~factor(metric, levels = c("FDis", "FRic", "FEve", "FDiv")), 
-             scales = "free_y", axes = "all_x", axis.labels = "margins")
-
-layout <- '
-AB
-CC
-'
-
-free(p1) + guide_area() + p2 + 
-  plot_layout(guides = 'collect', 
-              design = layout,
-              heights = c(1.1,2)) &
-  theme(legend.direction = 'vertical',
-        legend.box = 'horizontal')
-# 
-# ggsave(here("figures", "figure_3.png"), 
-#        width = 8, height = 6, dpi = 300) 
 
 #### estimate the contribution of each trait to metrics of FD ####
 ### based on Stuart-Smith et al. 2013
