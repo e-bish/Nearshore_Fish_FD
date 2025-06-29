@@ -10,6 +10,14 @@ library(multcompView)
 
 set.seed(2025)
 
+site_colors <- rev(c("#8c510a","#d8b365", 
+                     # "#f6e8c1",
+                     "lightgoldenrod",
+                     # "#c7eae8",
+                     "lightblue",
+                     "#5ab4ac", "#01665e"))
+
+
 #load custom functions
 source(here("analysis", "group_comparison_functions.R"))
 
@@ -26,6 +34,41 @@ mFD_results_long <- mFD_results %>%
   filter(!metric %in% c("Species_Richness", "FRic", "FDis")) %>% 
   mutate(metric = factor(metric, levels = c("SESFRic", "FEve", "FDiv", "SESFDis"),
          labels = c("SESFRic", "FEve", "FDiv", "SESFDis")))
+
+#### summarize values ####
+
+##### summary stats #####
+create_metric_summary_table <- function(metric_ID) {
+  tmp <- mFD_results %>% 
+    summarize(min = min(.data[[metric_ID]]), 
+              max = max(.data[[metric_ID]]), 
+              avg = mean(.data[[metric_ID]]), 
+              sd = sd(.data[[metric_ID]])) %>% 
+    mutate(metric = metric_ID)
+  
+  return(tmp)
+}
+
+summary_stats <- map_dfr(metrics, create_metric_summary_table)
+
+#Species richness 
+
+mFD_results %>% 
+  filter(site == "COR") %>% 
+  summarize(min = min(Species_Richness), max= max(Species_Richness), avg = mean(Species_Richness), sd = sd(Species_Richness))
+
+mFD_results %>% 
+  filter(!site == "COR") %>% 
+  summarize(min = min(Species_Richness), max= max(Species_Richness), avg = mean(Species_Richness), sd = sd(Species_Richness))
+
+mFD_results %>% 
+  group_by(region) %>% 
+  summarize(min = min(Species_Richness), max= max(Species_Richness), avg = mean(Species_Richness), sd = sd(Species_Richness))
+
+mFD_results %>% 
+  group_by(veg) %>% 
+  summarize(min = min(Species_Richness), max= max(Species_Richness), avg = mean(Species_Richness), sd = sd(Species_Richness))
+
 
 #### visualize differences ####
 
@@ -130,32 +173,32 @@ ipa_FD / site_FD / year_FD + plot_layout(guides = "collect")
 
 
 #### FD by region ####
-# mFD_results %>% 
-#   pivot_longer(!c(site, ipa, year, shoreline, region, veg), names_to = "metric", values_to = "value") %>% 
+# mFD_results %>%
+#   pivot_longer(!c(site, ipa, year, shoreline, region, veg), names_to = "metric", values_to = "value") %>%
 #   ggplot(aes(x = region, y = value)) +
 #   geom_boxplot() +
 #   geom_point(aes(color = site)) +
 #   theme_classic() +
-#   facet_wrap(~factor(metric, levels = c("Species_Richness", "FDis", "FRic", "FEve", "FDiv"),
-#                      labels = c("Species Richness", "FDis", "FRic", "FEve", "FDiv")),
-#              scales = "free_y") + 
+#   facet_wrap(~metric,
+#              scales = "free_y") +
 #   scale_color_manual(values = site_colors) +
-#   labs(x = "Region", y = "Value") + 
+#   labs(x = "Region", y = "Value") +
 #   theme(strip.background = element_rect(fill = NA, colour = NA))
-# 
-# #### FD by veg ####
-# mFD_results %>% 
-#   pivot_longer(!c(site, ipa, year, shoreline, region, veg), names_to = "metric", values_to = "value") %>% 
+#consider the effect of COR if revisiting this
+
+# # # #### FD by veg ####
+# mFD_results %>%
+#   pivot_longer(!c(site, ipa, year, shoreline, region, veg), names_to = "metric", values_to = "value") %>%
 #   ggplot(aes(x = veg, y = value)) +
 #   geom_boxplot() +
 #   geom_point(aes(color = site)) +
 #   theme_classic() +
-#   facet_wrap(~factor(metric, levels = c("Species_Richness", "FDis", "FRic", "FEve", "FDiv"),
-#                      labels = c("Species Richness", "FDis", "FRic", "FEve", "FDiv")),
-#              scales = "free_y") + 
+#   facet_wrap(~metric,
+#              scales = "free_y") +
 #   scale_color_manual(values = site_colors) +
-#   labs(x = "Eelgrass", y = "Value") + 
+#   labs(x = "Eelgrass", y = "Value") +
 #   theme(strip.background = element_rect(fill = NA, colour = NA))
+#consider the effect of COR if revisiting this
 
 #### Permute factors at the shoreline level ####
 
@@ -198,6 +241,7 @@ pairwise.adonis2(mFD_results['Species_Richness'] ~ site, data = mFD_results,
 #COR v DOK, EDG, FAM, SHR, TUR
 #DOK & EDG v TUR
 
+## pairwise tests
 
 pairwise.adonis2(mFD_results['FEve'] ~ site, data = mFD_results,
                  permutations = 999, by = "margin", method = "euclidean")
