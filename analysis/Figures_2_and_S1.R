@@ -122,3 +122,33 @@ ipa_length_plot + ipa_trait_wrap + plot_layout(ncol = 1, heights = c(0.5,1)) + p
 ggsave(here("figures", "Figure_S1.png"), 
        width = 6, height = 8, dpi = 300)
 
+#by year
+
+year_trait_wrap <- fish_cwm_long %>% 
+  ggplot(aes(x = year, fill = factor(traits, levels = unique(traits)))) +
+  geom_bar(stat = "count", position = "fill") + 
+  theme_classic() + 
+  scale_fill_manual(values = trait_cols) +
+  theme(strip.background = element_rect(fill = NA, colour = NA),
+        strip.text.x = element_text(size = 10)) +
+  facet_wrap(~factor(trait_group, 
+                     labels = c("Body Shape",
+                                "Water Column Position",
+                                "Feeding Guild",
+                                "Migrations"))) +
+  labs(fill = "Traits", y = "Proportion of sampling points\nwhere dominant", x = "Condition category")
+
+
+length_cwm <- fish_cwm_df %>% 
+  select(!body_shape_i:feeding_guild)
+
+year_length_plot <- length_cwm %>% 
+  ggplot(aes(x = year, y = mean_length_mm)) +
+  geom_boxplot() + 
+  geom_point(alpha = 0.4) +
+  theme_classic() + 
+  theme(axis.title.x = element_blank(),
+        plot.title = element_text(hjust = 0.5, size = 10)) +
+  labs(y = "CWM of\nmean lengths (mm)", title = "Body Size")
+
+year_length_plot + year_trait_wrap + plot_layout(ncol = 1, heights = c(0.5,1)) + plot_layout(guides = "collect") 
