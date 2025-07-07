@@ -159,39 +159,39 @@ wq_tb_range_export <- wq_tb_long %>%
 #   theme_bw() + 
 #   labs(y = "Mean value", x = "Site", fill = "Year")
 
-compare_secchi <- wq_tb %>% 
-  group_by(site, month, year) %>% 
-  summarize(mean_val = mean(secchi_depth_m)) %>% 
-  ungroup() %>% 
-  pivot_wider(names_from = site, values_from = mean_val) %>% 
-  relocate(TUR, .after = year) %>% 
-  mutate(across(TUR:EDG, ~  . - TUR)) %>% 
-  pivot_longer(!c(month, year), names_to = "site") %>% 
-  group_by(site) %>% 
-  summarize(mean_diff = mean(value, na.rm = TRUE))
-  
-compare_TUR_temp <- wq_tb %>% 
-  group_by(site, month, year) %>% 
-  summarize(mean_val = mean(temperature)) %>% 
-  ungroup() %>% 
-  pivot_wider(names_from = site, values_from = mean_val) %>% 
-  relocate(TUR, .after = year) %>% 
-  mutate(across(TUR:EDG, ~  . - TUR)) %>% 
-  pivot_longer(!c(month, year), names_to = "site") %>% 
-  group_by(site) %>% 
-  summarize(mean_diff = mean(value, na.rm = TRUE))
-
-compare_COR_temp <- wq_tb %>% 
-  group_by(site, month, year) %>% 
-  summarize(mean_val = mean(temperature)) %>% 
-  ungroup() %>% 
-  pivot_wider(names_from = site, values_from = mean_val) %>% 
-  relocate(TUR, .after = year) %>% 
-  mutate(across(TUR:EDG, ~  . - COR)) %>% 
-  pivot_longer(!c(month, year), names_to = "site") %>% 
-  group_by(site) %>% 
-  summarize(mean_diff = mean(value, na.rm = TRUE))
-  
+# compare_secchi <- wq_tb %>% 
+#   group_by(site, month, year) %>% 
+#   summarize(mean_val = mean(secchi_depth_m)) %>% 
+#   ungroup() %>% 
+#   pivot_wider(names_from = site, values_from = mean_val) %>% 
+#   relocate(TUR, .after = year) %>% 
+#   mutate(across(TUR:EDG, ~  . - TUR)) %>% 
+#   pivot_longer(!c(month, year), names_to = "site") %>% 
+#   group_by(site) %>% 
+#   summarize(mean_diff = mean(value, na.rm = TRUE))
+#   
+# compare_TUR_temp <- wq_tb %>% 
+#   group_by(site, month, year) %>% 
+#   summarize(mean_val = mean(temperature)) %>% 
+#   ungroup() %>% 
+#   pivot_wider(names_from = site, values_from = mean_val) %>% 
+#   relocate(TUR, .after = year) %>% 
+#   mutate(across(TUR:EDG, ~  . - TUR)) %>% 
+#   pivot_longer(!c(month, year), names_to = "site") %>% 
+#   group_by(site) %>% 
+#   summarize(mean_diff = mean(value, na.rm = TRUE))
+# 
+# compare_COR_temp <- wq_tb %>% 
+#   group_by(site, month, year) %>% 
+#   summarize(mean_val = mean(temperature)) %>% 
+#   ungroup() %>% 
+#   pivot_wider(names_from = site, values_from = mean_val) %>% 
+#   relocate(TUR, .after = year) %>% 
+#   mutate(across(TUR:EDG, ~  . - COR)) %>% 
+#   pivot_longer(!c(month, year), names_to = "site") %>% 
+#   group_by(site) %>% 
+#   summarize(mean_diff = mean(value, na.rm = TRUE))
+#   
   
 # wq_tb %>% 
 #   pivot_longer(c(secchi_depth_m, do_mg_l, salinity_ppm, temperature), names_to = "metric") %>% 
