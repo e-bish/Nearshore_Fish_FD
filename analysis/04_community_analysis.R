@@ -3,10 +3,13 @@ library(here)
 library(vegan)
 library(pairwiseAdonis)
 library(ggrepel)
+library(patchwork)
+
 
 set.seed(2025)
 load(here("data", "net_core.Rdata")) 
 load(here("data", "fish_L_full.Rdata"))
+load(here("data", "wq_tb.Rdata"))
 
 site_colors <- rev(c("#8c510a","#d8b365", 
                      # "#f6e8c1",
@@ -89,7 +92,7 @@ combined_points %>%
   xlim(0,15) +
   scale_color_manual(values = site_colors)
 
-#### rda for site ####
+#### nmds ####
 
 fish_L_all <- fish_L_full %>% 
   mutate(ipa = ifelse(ipa == "Natural2", "Natural", ipa)) %>% 
@@ -177,6 +180,8 @@ nmds_all <- ggplot() +
   scale_color_manual(values = site_colors) +
   scale_fill_manual(values = site_colors) +
   theme_classic() +
+  annotate("text", x = -1, y = 1.4, 
+           label = paste("Stress = ", round(nmds$stress, 3))) +
   labs(color = "Site", shape = "Condition Category")
 
 #### nmds2 ####
@@ -239,8 +244,8 @@ nmds_abb <- ggplot() +
   scale_color_manual(values = site_colors) +
   scale_fill_manual(values = site_colors) +
   theme_classic() +
+  annotate("text", x = -1.4, y = 1.4, 
+           label = paste("Stress = ", round(nmds_abb$stress, digits = 3))) +
   labs(color = "Site", shape = "Condition Category", y = "")
-
-library(patchwork)
 
 nmds_all + nmds_abb + plot_layout(guides = "collect") + plot_annotation(tag_levels = 'A')
