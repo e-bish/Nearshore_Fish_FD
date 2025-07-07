@@ -25,6 +25,8 @@ wq_tb <- wq_import %>%
   select(!notes) %>% 
   mutate(shoreline = paste0(site, ipa), .after = ipa)
 
+save(wq_tb, file = here("data", "wq_tb.Rdata"))
+
 wq_tb_long <- wq_tb %>% 
   pivot_longer(c(secchi_depth_m, do_mg_l, salinity_ppm, temperature), names_to = "metric")
 
