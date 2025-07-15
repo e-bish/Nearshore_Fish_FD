@@ -179,6 +179,35 @@ ipa_FD / site_FD / year_FD + plot_layout(guides = "collect")
 #   theme(strip.background = element_rect(fill = NA, colour = NA))
 #consider the effect of COR if revisiting this
 
+
+### try Kruskal- Wallis test
+# with(mFD_results, kruskal.test(Species_Richness,ipa))
+# with(mFD_results, kruskal.test(SESFRic,ipa))
+# with(mFD_results, kruskal.test(FEve,ipa))
+# with(mFD_results, kruskal.test(FDiv,ipa))
+# with(mFD_results, kruskal.test(SESFDis,ipa))
+# 
+# with(mFD_results, dunn.test(FDiv, g=ipa, method= "bonferroni", kw=FALSE))
+# 
+# hist(log(mFD_results$Species_Richness))
+# hist(log(mFD_results$SESFRic))
+# hist(log(mFD_results$FEve))
+# hist(log(mFD_results$FDiv))
+# hist(sqrt(mFD_results$SESFDis))
+
+
+# with(mFD_results, kruskal.test(Species_Richness,site))
+# with(mFD_results, kruskal.test(SESFRic,site))
+# with(mFD_results, kruskal.test(FEve,site))
+# with(mFD_results, kruskal.test(FDiv,site))
+# with(mFD_results, kruskal.test(SESFDis,site))
+# 
+# library(dunn.test)
+# 
+# with(mFD_results, dunn.test(SESFRic, g=site, method= "bonferroni", kw=FALSE))
+# with(mFD_results, dunn.test(FEve, g=site, method= "bonferroni", kw=FALSE))
+
+
 #### Permute factors at the shoreline level ####
 
 ## shuffle shorelines to assess site and shoreline condition variables ##
