@@ -146,8 +146,6 @@ year_FD <- mFD_results_long %>%
   theme(strip.background = element_rect(fill = NA, colour = NA)) +
   facet_wrap(~metric, scales = "free_y", nrow = 1) 
 
-library(patchwork)
-
 ipa_FD / site_FD / year_FD + plot_layout(guides = "collect")
 
 
@@ -290,6 +288,13 @@ site_dispersions <- mFD_results %>%
   pivot_longer(cols = !site:year, names_to = "metric") %>% 
   mutate(metric = factor(metric, levels = metrics))
 
+disp_summary <- site_dispersions %>% 
+  group_by(site, metric) %>% 
+  summarize(median = median(value)) %>% 
+  group_by(metric) %>% 
+  summarize(min = min(median), max = max(median)) %>% 
+  mutate(diff = max/min)
+
 site_arg_list <- list(metrics, rep("site", times = 5), rep(list(plot_shuffle), times = 5))
 
 site_disp_pvals <- pmap_dfc(site_arg_list, compare_disp_pval) %>% 
@@ -314,11 +319,12 @@ range_df <- site_dispersions %>%
 site_dispersions_signif <- full_join(site_dispersions, site_signif) %>% 
   full_join(range_df) %>% 
   mutate(site = factor(site, levels = c("FAM", "TUR", "COR", "SHR", "DOK", "EDG")),
-         metric = factor(metric, levels = metrics)) %>% 
-  mutate(letters = ifelse(metric == "SESFDis" , NA, letters))
+         metric = factor(metric, levels = metrics, 
+                         labels = c("Species Richness", "Richness (standardized)", "Evenness", "Divergence", "Dispersion (standardized)"))) %>% 
+  mutate(letters = ifelse(metric == "SESFDis" , NA, letters)) 
 
 site_dispersions_signif %>% 
-  filter(!metric == "Species_Richness") %>% 
+  filter(!metric == "Species Richness") %>% 
   ggplot() +
   geom_boxplot(aes(x = site, y = value)) +
   geom_point(aes(y = ymax, x = site), color = "white", size = 0) +
