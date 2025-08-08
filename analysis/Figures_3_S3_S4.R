@@ -2,6 +2,7 @@ library(here)
 library(tidyverse)
 library(FD)
 library(RColorBrewer)
+library(patchwork)
 
 #load abundance and trait data
 load(here("data", "fish.list.Rdata"))
@@ -41,7 +42,7 @@ trait_cols <- c(bs_col, dp_col,
                 fg_col)
 
 #by site
-trait_wrap <- fish_cwm_long %>% 
+trait_wrap_plot <- fish_cwm_long %>% 
   ggplot(aes(x = site, fill = factor(traits, levels = unique(traits)))) +
   geom_bar(stat = "count", position = "fill") + 
   theme_classic() + 
@@ -49,8 +50,8 @@ trait_wrap <- fish_cwm_long %>%
   theme(strip.background = element_rect(fill = NA, colour = NA),
         strip.text.x = element_text(size = 10)) +
   facet_wrap(~factor(trait_group, 
-                     labels = c("Body Shape",
-                                "Water Column Position",
+                     labels = c("Transverse shape",
+                                "Vertical distribition",
                                 "Feeding Guild", 
                                 "Migrations"))) +
   labs(fill = "Traits", y = "Proportion of sampling points\nwhere dominant", x = "Site")
@@ -65,21 +66,12 @@ length_plot <- length_cwm %>%
   theme_classic() + 
   theme(axis.title.x = element_blank(),
         plot.title = element_text(hjust = 0.5, size = 10)) +
-  labs(y = "CWM of\nmean lengths (mm)", title = "Body Size")
+  labs(y = "CWM of\nmean lengths (mm)", title = "Size")
 
-length_plot + trait_wrap + plot_layout(ncol = 1, heights = c(0.5,1)) + plot_layout(guides = "collect") 
+length_plot + trait_wrap_plot + plot_layout(ncol = 1, heights = c(0.5,1)) + plot_layout(guides = "collect") 
 
-ggsave(here("figures", "Figure_2.png"), 
-       width = 6, height = 8, dpi = 300)
-
-
-adonis2(fish_cwm_df$mean_length_mm ~ site, data = fish_cwm_df,
-        permutations = 999, method = "euc")
-
-shapiro.test(fish_cwm_df$mean_length_mm)
-
-# adonis2(fish_cwm_df$body_shape_i ~ site, data = fish_cwm_df,
-#         permutations = 999, method = "euc")
+ggsave(here("figures", "Figure_3.png"), 
+       width = 6, height = 5.5, dpi = 300)
 
 #by ipa
 fish_cwm_long %>% 
@@ -98,9 +90,9 @@ ipa_trait_wrap <- fish_cwm_long %>%
   theme(strip.background = element_rect(fill = NA, colour = NA),
         strip.text.x = element_text(size = 10)) +
   facet_wrap(~factor(trait_group, 
-                     labels = c("Body Shape",
-                                "Water Column Position",
-                                "Feeding Guild",
+                     labels = c("Transverse shape",
+                                "Vertical distribution",
+                                "Feeding guild",
                                 "Migrations"))) +
   labs(fill = "Traits", y = "Proportion of sampling points\nwhere dominant", x = "Condition category")
 
@@ -115,12 +107,12 @@ ipa_length_plot <- length_cwm %>%
   theme_classic() + 
   theme(axis.title.x = element_blank(),
         plot.title = element_text(hjust = 0.5, size = 10)) +
-  labs(y = "CWM of\nmean lengths (mm)", title = "Body Size")
+  labs(y = "CWM of\nmean lengths (mm)", title = "Size")
 
 ipa_length_plot + ipa_trait_wrap + plot_layout(ncol = 1, heights = c(0.5,1)) + plot_layout(guides = "collect") 
 
-ggsave(here("figures", "Figure_S1.png"), 
-       width = 6, height = 8, dpi = 300)
+ggsave(here("figures", "Figure_S3.png"), 
+       width = 6, height = 5.5, dpi = 300)
 
 #by year
 
@@ -132,9 +124,9 @@ year_trait_wrap <- fish_cwm_long %>%
   theme(strip.background = element_rect(fill = NA, colour = NA),
         strip.text.x = element_text(size = 10)) +
   facet_wrap(~factor(trait_group, 
-                     labels = c("Body Shape",
-                                "Water Column Position",
-                                "Feeding Guild",
+                     labels = c("Transverse shape",
+                                "Vertical distribution",
+                                "Feeding guild",
                                 "Migrations"))) +
   labs(fill = "Traits", y = "Proportion of sampling points\nwhere dominant", x = "Condition category")
 
@@ -149,6 +141,9 @@ year_length_plot <- length_cwm %>%
   theme_classic() + 
   theme(axis.title.x = element_blank(),
         plot.title = element_text(hjust = 0.5, size = 10)) +
-  labs(y = "CWM of\nmean lengths (mm)", title = "Body Size")
+  labs(y = "CWM of\nmean lengths (mm)", title = "Size")
 
 year_length_plot + year_trait_wrap + plot_layout(ncol = 1, heights = c(0.5,1)) + plot_layout(guides = "collect") 
+
+ggsave(here("figures", "Figure_S4.png"), 
+       width = 6, height = 5.5, dpi = 300)
