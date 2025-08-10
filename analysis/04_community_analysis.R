@@ -1,6 +1,7 @@
 library(tidyverse)
 library(here)
 library(vegan)
+library(janitor)
 library(pairwiseAdonis)
 library(ggrepel)
 library(patchwork)
@@ -19,6 +20,14 @@ site_colors <- rev(c("#8c510a","#d8b365",
                      "#5ab4ac", "#01665e"))
 
 ### RAD ###
+
+spp_sum_all <- net_core %>% 
+  group_by(site, ComName) %>% 
+  summarize(spp_sum = sum(species_count)) %>% 
+  ungroup() %>% 
+  filter(!is.na(spp_sum)) %>% 
+  pivot_wider(names_from = ComName, values_from = spp_sum, values_fill = 0) %>% 
+  clean_names() 
 
 spp_sum_df <- net_core %>% 
   group_by(site, ComName) %>% 
