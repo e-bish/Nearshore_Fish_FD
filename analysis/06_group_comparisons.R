@@ -23,19 +23,29 @@ source(here("analysis", "group_comparison_functions.R"))
 
 #load data 
 load(here("data","mFD_results.Rdata")) #created in 04_diversity_analysis
-load(here("data", "SES_tab.Rdata")) #created in 05_SES_calc
-metrics <- c("Species_Richness", "SESFRic", "FEve", "FDiv", "SESFDis")
-
-mFD_results <- mFD_results %>% 
- inner_join(SES_tab) 
+metrics <- c("Species_Richness", "FRic", "FEve", "FDiv", "FDis")
 
 mFD_results_long <- mFD_results %>% 
   pivot_longer(!c(site, ipa, year, shoreline, region, veg), names_to = "metric", values_to = "value") %>% 
-  filter(!metric %in% c("Species_Richness", "FRic", "FDis")) %>% 
-  mutate(metric = factor(metric, levels = c("SESFRic", "FEve", "FDiv", "SESFDis"),
-         labels = c("SESFRic", "FEve", "FDiv", "SESFDis")))
+  mutate(metric = factor(metric, levels = c("Species_Richness", "FRic", "FEve", "FDiv", "FDis"),
+         labels = c("Species Richness", "FRic", "FEve", "FDiv", "FDis")))
 
 #### summarize values ####
+with(mFD_results, cor.test(Species_Richness, FEve))
+with(mFD_results, cor.test(Species_Richness, FDiv))
+with(mFD_results, cor.test(Species_Richness, FRic))
+with(mFD_results, cor.test(Species_Richness, FDis))
+
+
+by_site <- mFD_results %>% 
+  group_by(site, year) %>% 
+  summarize_at(vars(Species_Richness:FDis), mean)
+
+with(by_site, cor.test(Species_Richness, FEve))
+with(by_site, cor.test(Species_Richness, FDiv))
+with(by_site, cor.test(Species_Richness, FRic))
+with(by_site, cor.test(Species_Richness, FDis))
+
 
 ##### summary stats #####
 
