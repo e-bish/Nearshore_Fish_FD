@@ -59,6 +59,19 @@ mFD_results %>%
   filter(!site == "COR") %>% 
   summarize(min = min(Species_Richness), max= max(Species_Richness), avg = mean(Species_Richness), sd = sd(Species_Richness))
 
+mFD_results %>% 
+  summarize(min = min(FRic), max= max(FRic), avg = mean(FRic), sd = sd(FRic))
+
+mFD_results %>% 
+  summarize(min = min(FEve), max= max(FEve), avg = mean(FEve), sd = sd(FEve))
+
+mFD_results %>% 
+  summarize(min = min(FDiv), max= max(FDiv), avg = mean(FDiv), sd = sd(FDiv))
+
+mFD_results %>% 
+  summarize(min = min(FDis), max= max(FDis), avg = mean(FDis), sd = sd(FDis))
+
+
 #### visualize differences ####
 
 # plot with means
@@ -128,8 +141,9 @@ ipa_FD <- mFD_results_long %>%
   theme_classic() +
   labs(x = "Condition category", y = "Value", color = "Site") + 
   scale_color_manual(values = site_colors) +
-  theme(strip.background = element_rect(fill = NA, colour = NA)) +
-  facet_wrap(~ metric, scales = "free_y", nrow = 1) 
+  theme(strip.background = element_rect(fill = NA, colour = NA),
+        strip.text.x = element_text(" ")) +
+  facet_wrap(~ metric, scales = "free_y", ncol = 1, nrow = 5) 
 # 
 # ggsave(here("figures", "figure_S2.png"), 
 #        width = 8, height = 6, dpi = 300) 
@@ -140,10 +154,17 @@ site_FD <- mFD_results_long %>%
   geom_boxplot() +
   geom_point(alpha = 0.4, size = 2, show.legend = FALSE) +
   theme_classic() +
-  labs(x = "Site", y = "Value", fill = "Site") + 
+  labs(x = "Site", y = " ", fill = "Site") + 
   scale_fill_manual(values = site_colors) +
-  theme(strip.background = element_rect(fill = NA, colour = NA)) +
-  facet_wrap(~metric, scales = "free_y", nrow = 1)
+  theme(strip.background = element_rect(fill = NA, colour = NA), 
+        strip.text = element_text(face = "bold", size = 12)) +
+  facet_wrap(~factor(metric, labels = c("Species Richness",
+                                        "Functional Richness",
+                                        "Functional Evenness",
+                                        "Functional Divergence",
+                                        "Functional Dispersion"
+    
+  )), scales = "free_y", ncol = 1, nrow = 5)
 
 #### FD by year ####
 year_FD <- mFD_results_long %>% 
@@ -152,11 +173,12 @@ year_FD <- mFD_results_long %>%
   geom_point(alpha = 0.4, size = 2, show.legend = FALSE) +
   theme_classic() +
   scale_color_manual(values = site_colors) +
-  labs(x = "Year", y = "Value") + 
-  theme(strip.background = element_rect(fill = NA, colour = NA)) +
-  facet_wrap(~metric, scales = "free_y", nrow = 1) 
+  labs(x = "Year", y = " ") + 
+  theme(strip.background = element_rect(fill = NA, colour = NA),
+        strip.text.x = element_text(" ")) +
+  facet_wrap(~metric, scales = "free_y", ncol = 1) 
 
-ipa_FD / site_FD / year_FD + plot_layout(guides = "collect")
+ipa_FD + site_FD + year_FD + plot_layout(guides = "collect")
 
 
 #### FD by region ####
@@ -229,7 +251,7 @@ plot_shuffle <- how(within = Within(type = "free"),
 # head(mFD_results[shuffle(nrow(mFD_results), control = plot_shuffle), c("site", "ipa", "year")], 15)
 
 #test interactions first 
-int.plot_permanova_list <- map(metrics, calc_int.plot_permanova)
+int.plot_permanova_list <- map(metrics[-1], calc_int.plot_permanova)
 int.plot_permanova_df <- list_cbind(int.plot_permanova_list, name_repair = "minimal")
 int.plot_permanova_df <- int.plot_permanova_df %>%
   rownames_to_column(var = "X") %>% 
@@ -240,11 +262,11 @@ int.plot_permanova_df <- int.plot_permanova_df %>%
 int.plot_permanova_df <- read_csv(here("data", "int.plot_permanova_df.csv"))
 
 #test single factors 
-plot_permanova_list <- map(metrics, calc_plot_permanova)
+plot_permanova_list <- map(metrics[-1], calc_plot_permanova)
 plot_permanova_df <- list_cbind(plot_permanova_list, name_repair = "minimal")
 plot_permanova_df <- plot_permanova_df %>%
   rownames_to_column(var = "X") %>% 
-  mutate(across(where(is.numeric), round, 3)) %>% 
+  mutate(across(where(is.numeric), round, 4)) %>% 
   select(!contains("R2"))
 
 # write_csv(plot_permanova_df, here("data", "plot_permanova_df.csv")) #last saved 6/27/25
@@ -252,25 +274,32 @@ plot_permanova_df <- read_csv(here("data", "plot_permanova_df.csv"))
 
 ## follow up pairwise tests 
 
-pairwise.adonis2(mFD_results['Species_Richness'] ~ site, data = mFD_results,
-                 permutations = 999, by = "margin", method = "euclidean")
-#COR v DOK, EDG, FAM, SHR, TUR
-#DOK & EDG v TUR
+# pairwise.adonis2(mFD_results['Species_Richness'] ~ site, data = mFD_results,
+#                  permutations = 999, by = "margin", method = "euclidean")
+# #COR v DOK, EDG, FAM, SHR, TUR
+# #DOK & EDG v TUR
+
 
 ## pairwise tests
 
+pairwise.adonis2(mFD_results['FRic'] ~ site, data = mFD_results,
+                 permutations = 999, method = "euclidean")
+#COR higher than any other site
+
+pairwise.adonis2(mFD_results['FRic'] ~ year, data = mFD_results,
+                 permutations = 999, method = "euclidean")
+#2018 v 2019 & 2022
+
 pairwise.adonis2(mFD_results['FEve'] ~ site, data = mFD_results,
-                 permutations = 999, by = "margin", method = "euclidean")
+                 permutations = 999, method = "euclidean")
 # DOK vs.FAM, COR, TUR, SHR
 
-pairwise.adonis2(mFD_results['Species_Richness'] ~ year, 
-                 data = mFD_results,
-                 by = "margin", method = "euclidean")
-#2018 v 2022
+# pairwise.adonis2(mFD_results['Species_Richness'] ~ year, 
+#                  data = mFD_results,
+#                  by = "margin", method = "euclidean")
+# #2018 v 2022
 
-pairwise.adonis2(mFD_results['SESFRic'] ~ year, data = mFD_results,
-                 permutations = 999, by = "margin", method = "euclidean")
-#2018 & 2022 v 2019
+
 
 # dispersion between shoreline conditions
 ipa_dispersions <- mFD_results %>% 
@@ -330,8 +359,8 @@ site_dispersions_signif <- full_join(site_dispersions, site_signif) %>%
   full_join(range_df) %>% 
   mutate(site = factor(site, levels = c("FAM", "TUR", "COR", "SHR", "DOK", "EDG")),
          metric = factor(metric, levels = metrics, 
-                         labels = c("Species Richness", "Richness (standardized)", "Evenness", "Divergence", "Dispersion (standardized)"))) %>% 
-  mutate(letters = ifelse(metric == "SESFDis" , NA, letters)) 
+                         labels = c("Species Richness", "Functional Richness", "Functional Evenness", "Functional Divergence", "Functional Dispersion"))) %>%
+  mutate(letters = ifelse(metric %in% c("Functional Richness", "Functional Dispersion") , NA, letters)) 
 
 site_dispersions_signif %>% 
   filter(!metric == "Species Richness") %>% 
