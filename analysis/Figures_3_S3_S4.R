@@ -5,7 +5,7 @@ library(RColorBrewer)
 library(patchwork)
 
 #load abundance and trait data
-load(here("data", "fish.list.Rdata"))
+load(here("data", "fish.list.Rdata")) #created in "03_create_matrices.R"
 
 SOS_core_sites <- factor(c("FAM", "TUR", "COR", "SHR", "DOK", "EDG"), 
                          levels = c("FAM", "TUR", "COR", "SHR", "DOK", "EDG"))
@@ -70,7 +70,7 @@ length_plot <- length_cwm %>%
 
 length_plot + trait_wrap_plot + plot_layout(ncol = 1, heights = c(0.5,1)) + plot_layout(guides = "collect") 
 
-ggsave(here("figures", "Figure_3.png"), 
+ggsave(here("figures", "Fig_3.png"), 
        width = 6, height = 5.5, dpi = 300)
 
 #by ipa
@@ -111,7 +111,7 @@ ipa_length_plot <- length_cwm %>%
 
 ipa_length_plot + ipa_trait_wrap + plot_layout(ncol = 1, heights = c(0.5,1)) + plot_layout(guides = "collect") 
 
-ggsave(here("figures", "Figure_S3.png"), 
+ggsave(here("figures", "Fig_S3.png"), 
        width = 6, height = 5.5, dpi = 300)
 
 #by year
@@ -145,5 +145,5 @@ year_length_plot <- length_cwm %>%
 
 year_length_plot + year_trait_wrap + plot_layout(ncol = 1, heights = c(0.5,1)) + plot_layout(guides = "collect") 
 
-ggsave(here("figures", "Figure_S4.png"), 
+ggsave(here("figures", "Fig_S4.png"), 
        width = 6, height = 5.5, dpi = 300)

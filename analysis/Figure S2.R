@@ -2,8 +2,10 @@ library(vegan)
 library(tidyverse)
 library(janitor)
 library(here)
+library(ggrepel)
 
-load(here("data", "net_core.Rdata")) 
+
+load(here("data", "net_core.Rdata")) #created in "02_tidy_data.R"
 
 set.seed(2025)
 
@@ -69,12 +71,8 @@ combined_points <- FAM_points %>%
   bind_rows(TUR_points, COR_points, SHR_points, DOK_points, EDG_points) %>% 
   mutate(site = factor(site, levels = c("FAM", "TUR", "COR", "SHR", "DOK", "EDG")))
 
-library(ggrepel)
-
 site_colors <- rev(c("#8c510a","#d8b365", 
-                     # "#f6e8c1",
                      "lightgoldenrod",
-                     # "#c7eae8",
                      "lightblue",
                      "#5ab4ac", "#01665e"))
 
@@ -87,3 +85,6 @@ combined_points %>%
   labs(x = "Rank", y = "Abundance", color = "Site", shape = "Site") +
   xlim(0,15) +
   scale_color_manual(values = site_colors)
+
+ggsave(here("figures", "Fig_S2.png"), 
+       width = 6, height = 5.5, dpi = 300)

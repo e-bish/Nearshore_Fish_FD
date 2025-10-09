@@ -47,21 +47,21 @@ fish_L_full <- net_core %>% #L is referring to the RLQ analysis
   clean_names() %>%
   ungroup()
 
-save(fish_L_full, file = here("data", "fish_L_full.Rdata")) #last saved 6/3/25
+save(fish_L_full, file = here("data", "fish_L_full.Rdata")) 
 
 fish_L_sample <- fish_L_full %>% 
   mutate(sample = paste(site, ipa, year, sep = "_"), .after = year) %>% 
   select(!1:3) %>% 
   column_to_rownames(var = "sample")
 
-save(fish_L_sample, file = here("data", "fish_L_sample.Rdata")) #last saved 6/3/25
+save(fish_L_sample, file = here("data", "fish_L_sample.Rdata")) 
 
 #check the abundance matrix for samples with few species
 rows_w_few_spp <- fish_L_sample %>%
   decostand(method = "pa") %>%
   filter(rowSums(.) < 4)
 
-save(rows_w_few_spp, file = here("data", "rows_w_few_spp.Rdata")) #last saved 6/3/25
+save(rows_w_few_spp, file = here("data", "rows_w_few_spp.Rdata")) 
 
 samples_w_few_spp <- rownames(rows_w_few_spp)
 
@@ -82,28 +82,28 @@ spp_names <- net_core %>%
 #link these common names to their scientific names in fishbase
 #note that since updating R this takes a very long time to run
 
-sci_names <- vector(mode = 'list', length = length(spp_names))
-
-for (i in 1:nrow(spp_names)) {
-  sci_names[[i]] <- rfishbase::common_to_sci(spp_names[i,])
-  spp_names[i,2] <- ifelse(nrow(sci_names[[i]]) == 1, sci_names[[i]][[1]], NA)
-}
-
-#specify which entry to use for species that have multiple common names
-spp_names <- spp_names %>% 
-  mutate(Species = case_when(ComName == "Pacific herring" ~ "Clupea pallasii", 
-                             ComName == "Pacific Cod" ~ "Gadus macrocephalus",
-                             ComName == "Northern Anchovy" ~ "Engraulis mordax",
-                             ComName == "Striped Seaperch" ~ "Embiotoca lateralis",
-                             ComName == "Rock Sole" ~ "Lepidopsetta bilineata",
-                             ComName == "Steelhead trout" ~ "Oncorhynchus mykiss",
-                             ComName == "Cutthroat trout" ~ "Oncorhynchus clarkii",
-                             ComName == "Tube-snout" ~ "Aulorhynchus flavidus",
-                             TRUE ~ Species)) %>% 
-  arrange(ComName) %>% 
-  filter(!str_detect(ComName, 'UnID'))
-
-write_csv(spp_names, "data/spp_names.csv")
+# sci_names <- vector(mode = 'list', length = length(spp_names))
+# 
+# for (i in 1:nrow(spp_names)) {
+#   sci_names[[i]] <- rfishbase::common_to_sci(spp_names[i,])
+#   spp_names[i,2] <- ifelse(nrow(sci_names[[i]]) == 1, sci_names[[i]][[1]], NA)
+# }
+# 
+# #specify which entry to use for species that have multiple common names
+# spp_names <- spp_names %>% 
+#   mutate(Species = case_when(ComName == "Pacific herring" ~ "Clupea pallasii", 
+#                              ComName == "Pacific Cod" ~ "Gadus macrocephalus",
+#                              ComName == "Northern Anchovy" ~ "Engraulis mordax",
+#                              ComName == "Striped Seaperch" ~ "Embiotoca lateralis",
+#                              ComName == "Rock Sole" ~ "Lepidopsetta bilineata",
+#                              ComName == "Steelhead trout" ~ "Oncorhynchus mykiss",
+#                              ComName == "Cutthroat trout" ~ "Oncorhynchus clarkii",
+#                              ComName == "Tube-snout" ~ "Aulorhynchus flavidus",
+#                              TRUE ~ Species)) %>% 
+#   arrange(ComName) %>% 
+#   filter(!str_detect(ComName, 'UnID'))
+# 
+# write_csv(spp_names, "data/spp_names.csv")
 spp_names <- read_csv(here("data", "spp_names.csv"))
 
 #calculate the mean fork length of each species from the subsamples taken in the field
@@ -152,17 +152,13 @@ combine_fg <- bind_rows(manual_check, omnivores) %>%
   select(ComName, Species, feeding_guild) %>% 
   arrange(ComName)
 
-#chinook are omnivorous - duffy et al. 2010
-#chinook and chum in eelgrass mostly eat epifaunal invertebrates - Kennedy et al. 2018
-#coho and chinook eat some fish, otherwise they (and other species) eat a combination of zoobenthos and zooplankton - Beamish et al. 2003 
-
 fish_traits <- full_join(fork_length, milieu) %>% 
   select(3,1,2,4,5,6) %>% 
   left_join(combine_fg) %>% 
   mutate(ComName = replace(ComName, ComName == "Pacific Sandfish", "Pacific sandfish")) %>%
   arrange(ComName)
 
-write_csv(fish_traits, "data/fish_traits.csv") #last saved 6/25/25
+write_csv(fish_traits, "data/fish_traits.csv") 
 
 fish_Q <- fish_traits %>% 
   select(-c(Species, ComName)) %>% 
@@ -175,7 +171,7 @@ rownames(fish_Q) <- colnames(fish_L)
 confirm_proper_names <- fish_Q %>% 
   mutate(Species = fish_traits$ComName, .before = mean_length_mm)
 
-# #check the coefficient of variation
+##check the coefficient of variation
 CV <- function(x) { 100 * sd(x) / mean(x) }
 CV(fish_Q$mean_length_mm)
 # # <50 is small, so we don't necessarily need to transform the length data
@@ -200,4 +196,4 @@ fish.list <- list("trait" = fish_Q,
                   "abund" = fish_L,
                   "meta" = fish_meta) 
 
-save(fish.list, file = here("data", "fish.list.Rdata")) #last saved 6/25/25
+save(fish.list, file = here("data", "fish.list.Rdata")) 
