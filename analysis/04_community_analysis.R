@@ -49,7 +49,7 @@ nmds_all <- ggplot() +
            label = paste("Stress = ", round(nmds$stress, 3))) +
   labs(color = "Site", shape = "Condition Category")
 
-#### nmds2 ####
+#### nmds ####
 
 wq_tb_exp <- wq_tb %>%
   pivot_longer(c(secchi_depth_m, do_mg_l, salinity_ppm, temperature), names_to = "metric") %>%
@@ -94,7 +94,7 @@ wq_vec_df <- wq_vecs %>%
   mutate(wq_labels = c("Secchi", "Temp"))
 
 #### Fig 2 ####
-nmds_abb <- ggplot() +
+nmds_abb_plot <- ggplot() +
   geom_point(data = points_abb, aes(x = MDS1, y = MDS2, color = site, shape = ipa), size = 3) + 
   geom_text_repel(data = points_abb, 
                   aes(x = MDS1, y = MDS2, color = site, label = yr_abb),
@@ -106,12 +106,12 @@ nmds_abb <- ggplot() +
             label = wq_vec_df$wq_labels, size = 4, nudge_y = -0.05) +
   scale_color_manual(values = site_colors) +
   scale_fill_manual(values = site_colors) +
-  theme_classic() +
+  theme_classic(base_size = 10) +
   annotate("text", x = -1.4, y = 1.4, 
            label = paste("Stress = ", round(nmds_abb$stress, digits = 3))) +
   labs(color = "Site", shape = "Condition Category", y = "")
 
-nmds_all + nmds_abb + plot_layout(guides = "collect") + plot_annotation(tag_levels = 'A')
+nmds_all + nmds_abb_plot + plot_layout(guides = "collect") + plot_annotation(tag_levels = 'A')
 
 ggsave(here("figures", "Fig_2.png"), 
-       width = 6, height = 5.5, dpi = 300)
+       width = 174, height = 100, units = "mm", dpi = 300)
