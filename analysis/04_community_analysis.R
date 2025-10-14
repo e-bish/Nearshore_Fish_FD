@@ -17,6 +17,19 @@ site_colors <- rev(c("#8c510a","#d8b365",
                      "lightblue",
                      "#5ab4ac", "#01665e"))
 
+#### summarize catch ####
+total_catch <- sum(net_core$species_count)
+
+net_core %>% 
+  group_by(tax_group) %>% 
+  summarize(sum = sum(species_count), prop = sum/total_catch) %>% 
+  arrange(-prop)
+
+#eelgrass community
+net_core %>% 
+  filter(tax_group %in% c("Stichaeid", "Sygnathid", "Aulorhynchus", "Pholidae")) %>% 
+  summarize(sum = sum(species_count), prop = sum/core_catch)
+
 #### nmds ####
 fish_L_all <- fish_L_full %>% 
   mutate(ipa = ifelse(ipa == "Natural2", "Natural", ipa)) %>% 
