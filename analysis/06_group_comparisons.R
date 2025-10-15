@@ -112,47 +112,62 @@ metric_names <- c("Species Richness",
 index_plot1 <- mFD_results %>% 
   ggplot(aes(x = ipa, y = Species_Richness)) +
   geom_boxplot() +
+  geom_point(alpha = 0.5) +
   theme_classic() +
-  labs(x = " ", y = "Species\nRichness")
+  labs(x = " ", y = "Species\nRichness") + 
+  theme(plot.margin = unit(c(0, 0, -5, 0.5), "mm"))
 
 plot_index_2 <- function(index, metric) {
   ggplot(mFD_results, aes(y = .data[[index]], x = site)) +
     geom_boxplot() +
+    geom_point(alpha = 0.5) +
     theme_classic() +
-    labs(y = " ", x = " ", title = metric) +
-    theme(plot.title = element_text(hjust = 0.5))
+    labs(y = " ", x = " ") +
+    theme(axis.text.x = element_text(angle = 45, vjust = 0.9, hjust=1),
+          plot.margin = unit(c(0, 0.5, -5, 0.5), "mm"))
 }
 
 plot_index_3 <- function(index, view) {
   ggplot(mFD_results, aes(y = .data[[index]], x = .data[[view]])) +
     geom_boxplot() +
+    geom_point(alpha = 0.5) +
     theme_classic() +
-    labs(y = " ", x = " ") 
+    labs(y = " ", x = " ") +
+    theme(plot.margin = unit(c(0, 0.5, -5, 0.5), "mm"))
 }
 
 index_plot4 <- mFD_results %>% 
   ggplot(aes(x = ipa, y = FDis)) +
   geom_boxplot() +
+  geom_point(alpha = 0.5) +
   theme_classic() +
-  labs(x = "Shoreline Condition", y = "FDis")
+  labs(x = "Shoreline Condition", y = "FDis") + 
+  theme(plot.margin = unit(c(0, 0.5, -5, 0.5), "mm"))
 
 index_plot5 <- mFD_results %>% 
   ggplot(aes(x = site, y = FDis)) +
   geom_boxplot() +
+  geom_point(alpha = 0.5) +
   theme_classic() +
-  labs(x = "Site", y = " ", title = "Functional Dispersion") +
-  theme(plot.title = element_text(hjust = 0.5))
+  labs(x = "Site", y = " ") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.75, hjust=1),
+        plot.margin = unit(c(0, 0.5, -5, 0.5), "mm"))
 
 index_plot6 <- mFD_results %>% 
   ggplot(aes(x = year, y = FDis)) +
   geom_boxplot() +
+  geom_point(alpha = 0.5) +
   theme_classic() +
-  labs(x = "Year", y = " ")
+  labs(x = "Year", y = " ") + 
+  theme(plot.margin = unit(c(0, 0.5, -5, 0.5), "mm"))
 
 plot_index_7 <- function(index, view) {
   ggplot(mFD_results, aes(y = .data[[index]], x = .data[[view]])) +
     geom_boxplot() +
+    geom_point(alpha = 0.5) +
     theme_classic() +
+    theme(axis.text.x = element_text(angle = 25, vjust = 0.9, hjust=1),
+          plot.margin = unit(c(0, 0.5, -5, 0.5), "mm")) + 
     labs(y = index, x = " ") 
 }
 
@@ -168,16 +183,43 @@ index_plot2 <- map2(index_names, metric_names, plot_index_2)
 index_plot3 <- map2(index_grid$index, index_grid$view, plot_index_3)
 index_plot7 <- map2(index_grid$index, index_grid$view, plot_index_7)
 
+# make headings 
+make_heading <- function(label) {
+  ggplot() +
+    annotate("text", x = 0.5, y = 0.55, label = label,
+             size = 4, fontface = "bold") +
+    annotate("segment", x = 0, xend = 1, y = 0.15, yend = 0.15,
+             linewidth = 0.8) +
+    expand_limits(x = c(0, 1), y = c(0, 1)) +   
+    coord_cartesian(clip = "off") +
+    theme_void() +
+    theme(plot.margin = margin(-10, 0, 0, 0))
+}
+
+titles <- list(
+  make_heading("Species Richness"),
+  make_heading("Functional Richness"),
+  make_heading("Functional Evenness"),
+  make_heading("Functional Divergence"),
+  make_heading("Functional Dispersion")
+)
+
 
 # Combine all plots
-(index_plot1 + index_plot2[[1]] + index_plot3[[3]]) /
-  (index_plot7[[4]] + index_plot2[[2]] + index_plot3[[6]]) / 
-  (index_plot7[[7]] + index_plot2[[3]] + index_plots3[[9]]) / 
-  (index_plot7[[10]] + index_plot2[[4]] + index_plots3[[12]]) / 
-  (index_plot4 + index_plot5 + index_plot6) 
+(titles[[1]] /
+(index_plot1 + index_plot2[[1]] + index_plot3[[3]] + plot_layout(ncol = 3)) /
+  titles[[2]] /
+  (index_plot7[[4]] + index_plot2[[2]] + index_plot3[[6]]+ plot_layout(ncol = 3)) / 
+  titles[[3]] / 
+  (index_plot7[[7]] + index_plot2[[3]] + index_plot3[[9]]+ plot_layout(ncol = 3)) / 
+  titles[[4]] / 
+  (index_plot7[[10]] + index_plot2[[4]] + index_plot3[[12]]+ plot_layout(ncol = 3)) / 
+  titles[[5]] / 
+  (index_plot4 + index_plot5 + index_plot6 + plot_layout(ncol = 3))) + 
+  plot_layout(heights = c(0.5, 1, 0.5, 1, 0.5, 1, 0.5, 1, 0.5, 1))
 
 ggsave(here("figures", "Fig_4.png"), 
-       width = 6, height = 5.5, dpi = 300)
+       width = 174, height = 200, units = "mm", dpi = 300)
 
 #### Permute factors at the shoreline level ####
 
