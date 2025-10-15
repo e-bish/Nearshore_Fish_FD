@@ -219,7 +219,7 @@ titles <- list(
   plot_layout(heights = c(0.5, 1, 0.5, 1, 0.5, 1, 0.5, 1, 0.5, 1))
 
 ggsave(here("figures", "Fig_4.png"), 
-       width = 174, height = 200, units = "mm", dpi = 300)
+       width = 174, height = 215, units = "mm", dpi = 300)
 
 #### Permute factors at the shoreline level ####
 
