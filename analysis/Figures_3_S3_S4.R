@@ -14,6 +14,8 @@ SOS_core_sites <- factor(c("FAM", "TUR", "COR", "SHR", "DOK", "EDG"),
 fish_cwm <- functcomp(x = fish.list$trait,
                       a = as.matrix(fish.list$abund),
                       CWM.type = "dom")
+?functcomp
+
 
 fish_cwm_df <- fish_cwm %>% 
   rownames_to_column( "sample") %>% 
@@ -54,7 +56,7 @@ trait_wrap_plot <- fish_cwm_long %>%
                                 "Vertical distribition",
                                 "Feeding Guild", 
                                 "Migrations"))) +
-  labs(fill = "Traits", y = "Proportion of sampling points\nwhere dominant", x = "Site")
+  labs(fill = "Trait value", y = "Relative abundance of\nCWM trait values", x = "Site")
 
 length_cwm <- fish_cwm_df %>% 
   select(!body_shape_i:feeding_guild)
@@ -71,7 +73,7 @@ length_plot <- length_cwm %>%
 length_plot + trait_wrap_plot + plot_layout(ncol = 1, heights = c(0.5,1)) + plot_layout(guides = "collect") 
 
 ggsave(here("figures", "Fig_3.png"), 
-       width = 6, height = 5.5, dpi = 300)
+       width = 174, height = 174, units = "mm", dpi = 300)
 
 #by ipa
 fish_cwm_long %>% 
