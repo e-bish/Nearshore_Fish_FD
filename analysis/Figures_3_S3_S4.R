@@ -54,8 +54,8 @@ trait_wrap_plot <- fish_cwm_long %>%
   facet_wrap(~factor(trait_group, 
                      labels = c("Transverse shape",
                                 "Vertical distribition",
-                                "Feeding Guild", 
-                                "Migrations"))) +
+                                "Feeding guild", 
+                                "Migration behavior"))) +
   labs(fill = "Trait value", y = "Relative abundance of\nCWM trait values", x = "Site")
 
 length_cwm <- fish_cwm_df %>% 
@@ -73,17 +73,9 @@ length_plot <- length_cwm %>%
 length_plot + trait_wrap_plot + plot_layout(ncol = 1, heights = c(0.5,1)) + plot_layout(guides = "collect") 
 
 ggsave(here("figures", "Fig_3.png"), 
-       width = 174, height = 174, units = "mm", dpi = 300)
+       width = 174, height = 160, units = "mm", dpi = 300)
 
 #by ipa
-fish_cwm_long %>% 
-  ggplot(aes(x = ipa, fill = factor(traits, levels = unique(traits)))) +
-  geom_bar(stat = "count", position = "fill") + 
-  theme_classic() + 
-  scale_fill_manual(values = trait_cols) +
-  facet_wrap(~trait_group) +
-  labs(fill = "traits", y = "proportion of sampling points where dominant")
-
 ipa_trait_wrap <- fish_cwm_long %>% 
   ggplot(aes(x = ipa, fill = factor(traits, levels = unique(traits)))) +
   geom_bar(stat = "count", position = "fill") + 
@@ -93,11 +85,10 @@ ipa_trait_wrap <- fish_cwm_long %>%
         strip.text.x = element_text(size = 10)) +
   facet_wrap(~factor(trait_group, 
                      labels = c("Transverse shape",
-                                "Vertical distribution",
-                                "Feeding guild",
-                                "Migrations"))) +
-  labs(fill = "Traits", y = "Proportion of sampling points\nwhere dominant", x = "Condition category")
-
+                                "Vertical distribition",
+                                "Feeding guild", 
+                                "Migration behavior"))) +
+  labs(fill = "Trait value", y = "Relative abundance of\nCWM trait values", x = "Condition Category")
 
 length_cwm <- fish_cwm_df %>% 
   select(!body_shape_i:feeding_guild)
@@ -114,7 +105,7 @@ ipa_length_plot <- length_cwm %>%
 ipa_length_plot + ipa_trait_wrap + plot_layout(ncol = 1, heights = c(0.5,1)) + plot_layout(guides = "collect") 
 
 ggsave(here("figures", "Fig_S3.png"), 
-       width = 6, height = 5.5, dpi = 300)
+       width = 174, height = 160, units = "mm", dpi = 300)
 
 #by year
 
@@ -127,10 +118,10 @@ year_trait_wrap <- fish_cwm_long %>%
         strip.text.x = element_text(size = 10)) +
   facet_wrap(~factor(trait_group, 
                      labels = c("Transverse shape",
-                                "Vertical distribution",
-                                "Feeding guild",
-                                "Migrations"))) +
-  labs(fill = "Traits", y = "Proportion of sampling points\nwhere dominant", x = "Condition category")
+                                "Vertical distribition",
+                                "Feeding guild", 
+                                "Migration behavior"))) +
+  labs(fill = "Trait value", y = "Relative abundance of\nCWM trait values", x = "Year")
 
 
 length_cwm <- fish_cwm_df %>% 
@@ -148,4 +139,4 @@ year_length_plot <- length_cwm %>%
 year_length_plot + year_trait_wrap + plot_layout(ncol = 1, heights = c(0.5,1)) + plot_layout(guides = "collect") 
 
 ggsave(here("figures", "Fig_S4.png"), 
-       width = 6, height = 5.5, dpi = 300)
+       width = 174, height = 160, units = "mm", dpi = 300)
