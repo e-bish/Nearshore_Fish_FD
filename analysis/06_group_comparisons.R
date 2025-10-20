@@ -104,6 +104,306 @@ site_FD <- mFD_results_long %>%
 
 #### Fig 4 ####
 
+metric_names <- c("Species Richness",
+                  "Functional Richness",
+                  "Functional Evenness",
+                  "Functional Divergence",
+                  "Functional Dispersion")
+
+index_plot1 <- mFD_results %>% 
+  ggplot(aes(x = ipa, y = Species_Richness)) +
+  geom_boxplot() +
+  geom_point(alpha = 0.5) +
+  theme_classic() +
+  labs(x = " ", y = "Species\nRichness") + 
+  theme(plot.margin = unit(c(0, 0, -5, 0.5), "mm"),
+        axis.text.x=element_blank())
+
+plot_index_2 <- function(index, metric) {
+  ggplot(mFD_results, aes(y = .data[[index]], x = site)) +
+    geom_boxplot() +
+    geom_point(alpha = 0.5) +
+    theme_classic() +
+    labs(y = " ", x = " ") +
+    theme(axis.text.x=element_blank(),
+          plot.margin = unit(c(0, 0.5, -5, 0.5), "mm"))
+}
+
+plot_index_3 <- function(index, view) {
+  ggplot(mFD_results, aes(y = .data[[index]], x = .data[[view]])) +
+    geom_boxplot() +
+    geom_point(alpha = 0.5) +
+    theme_classic() +
+    labs(y = " ", x = " ") +
+    theme(plot.margin = unit(c(0, 0.5, -5, 0.5), "mm"),
+          axis.text.x=element_blank())
+}
+
+index_plot4 <- mFD_results %>% 
+  ggplot(aes(x = ipa, y = FDis)) +
+  geom_boxplot() +
+  geom_point(alpha = 0.5) +
+  theme_classic() +
+  labs(x = "Shoreline Condition", y = "FDis") + 
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
+    plot.margin = unit(c(0, 0.5, -5, 0.5), "mm"))
+
+index_plot5 <- mFD_results %>% 
+  ggplot(aes(x = site, y = FDis)) +
+  geom_boxplot() +
+  geom_point(alpha = 0.5) +
+  theme_classic() +
+  labs(x = "Site", y = " ") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
+        plot.margin = unit(c(0, 0.5, -5, 0.5), "mm"))
+
+index_plot6 <- mFD_results %>% 
+  ggplot(aes(x = year, y = FDis)) +
+  geom_boxplot() +
+  geom_point(alpha = 0.5) +
+  theme_classic() +
+  labs(x = "Year", y = " ") + 
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
+    plot.margin = unit(c(0, 0.5, -5, 0.5), "mm"))
+
+plot_index_7 <- function(index, view) {
+  ggplot(mFD_results, aes(y = .data[[index]], x = .data[[view]])) +
+    geom_boxplot() +
+    geom_point(alpha = 0.5) +
+    theme_classic() +
+    theme(axis.text.x=element_blank(),
+          plot.margin = unit(c(0, 0.5, -5, 0.5), "mm")) + 
+    labs(y = index, x = " ") 
+}
+
+
+# Create all combinations
+
+index_names <- c("Species_Richness", "FRic", "FEve", "FDiv", "FDis")
+views <- c("ipa", "site", "year")
+
+index_grid <- expand_grid(index = index_names, view = views)
+
+# Use map2 to iterate properly
+index_plot2 <- map2(index_names, metric_names, plot_index_2)
+index_plot3 <- map2(index_grid$index, index_grid$view, plot_index_3)
+index_plot7 <- map2(index_grid$index, index_grid$view, plot_index_7)
+
+# make headings 
+make_heading <- function(label) {
+  ggplot() +
+    annotate("text", x = 0.5, y = 0.55, label = label,
+             size = 4, fontface = "bold") +
+    expand_limits(x = c(0, 1), y = c(0, 1)) +   
+    coord_cartesian(clip = "off") +
+    theme_void() +
+    theme(plot.margin = margin(-10, 0, 0, 0))
+}
+
+titles <- list(
+  make_heading("Species Richness"),
+  make_heading("Functional Richness"),
+  make_heading("Functional Evenness"),
+  make_heading("Functional Divergence"),
+  make_heading("Functional Dispersion")
+)
+
+
+# Combine all plots
+(titles[[1]] /
+    (index_plot1 + index_plot2[[1]] + index_plot3[[3]] + plot_layout(ncol = 3)) /
+    titles[[2]] /
+    (index_plot7[[4]] + index_plot2[[2]] + index_plot3[[6]]+ plot_layout(ncol = 3)) / 
+    titles[[3]] / 
+    (index_plot7[[7]] + index_plot2[[3]] + index_plot3[[9]]+ plot_layout(ncol = 3)) / 
+    titles[[4]] / 
+    (index_plot7[[10]] + index_plot2[[4]] + index_plot3[[12]]+ plot_layout(ncol = 3)) / 
+    titles[[5]] / 
+    (index_plot4 + index_plot5 + index_plot6 + plot_layout(ncol = 3))) + 
+  plot_layout(heights = c(0.5, 1, 0.5, 1, 0.5, 1, 0.5, 1, 0.5, 1))
+
+##### test long format ####
+
+metric_names <- c("Species Richness",
+                  "Functional Richness",
+                  "Functional Evenness",
+                  "Functional Divergence",
+                  "Functional Dispersion")
+
+index_plot1 <- mFD_results_long %>% 
+  filter(metric == "Species Richness") %>% 
+  ggplot(aes(x = ipa, y = value)) +
+  geom_boxplot() +
+  geom_point(alpha = 0.5) +
+  theme_classic() +
+  labs(x = " ", y = "Species\nRichness") + 
+  theme(plot.margin = unit(c(0, 0, -5, 0.5), "mm"),
+        axis.text.x=element_blank())
+
+plot_index_2 <- function(index, metric) {
+  mFD_results_long %>%
+    filter(metric == .data[[index]]) %>%
+    ggplot(aes(x = site, y = value)) +
+      geom_boxplot() +
+      geom_point(alpha = 0.5) +
+      theme_classic() +
+      labs(y = " ", x = " ") +
+      theme(axis.text.x=element_blank(),
+          plot.margin = unit(c(0, 0.5, -5, 0.5), "mm"))
+}
+
+plot_index_3 <- function(index, view) {
+  ggplot(mFD_results, aes(y = .data[[index]], x = .data[[view]])) +
+    geom_boxplot() +
+    geom_point(alpha = 0.5) +
+    theme_classic() +
+    labs(y = " ", x = " ") +
+    theme(plot.margin = unit(c(0, 0.5, -5, 0.5), "mm"),
+          axis.text.x=element_blank())
+}
+
+index_plot4 <- mFD_results %>% 
+  ggplot(aes(x = ipa, y = FDis)) +
+  geom_boxplot() +
+  geom_point(alpha = 0.5) +
+  theme_classic() +
+  labs(x = "Condition category", y = "Functional\nDispersion") + 
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
+        plot.margin = unit(c(0, 0.5, -5, 0.5), "mm"))
+
+index_plot5 <- mFD_results %>% 
+  ggplot(aes(x = site, y = FDis)) +
+  geom_boxplot() +
+  geom_point(alpha = 0.5) +
+  theme_classic() +
+  labs(x = "Site", y = " ") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
+        plot.margin = unit(c(0, 0.5, -5, 0.5), "mm"))
+
+index_plot6 <- mFD_results %>% 
+  ggplot(aes(x = year, y = FDis)) +
+  geom_boxplot() +
+  geom_point(alpha = 0.5) +
+  theme_classic() +
+  labs(x = "Year", y = " ") + 
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
+        plot.margin = unit(c(0, 0.5, -5, 0.5), "mm"))
+
+plot_index_7 <- function(index, view, index_label) {
+  ggplot(mFD_results, aes(y = .data[[index]], x = .data[[view]])) +
+    geom_boxplot() +
+    geom_point(alpha = 0.5) +
+    theme_classic() +
+    theme(axis.text.x=element_blank(),
+          plot.margin = unit(c(0, 0.5, -5, 0.5), "mm")) + 
+    labs(y = index_label, x = " ") 
+}
+
+
+# Create all combinations
+
+index_names <- c("Species_Richness", "FRic", "FEve", "FDiv", "FDis")
+index_labels <- c("Species\nRichness",
+                  "Functional\nRichness",
+                  "Functional\nEvenness",
+                  "Functional\nDivergence",
+                  "Functional\nDispersion")
+views <- c("ipa", "site", "year")
+
+index_grid <- expand_grid(index = index_names, view = views)
+
+# Use map2 to iterate properly
+index_plot2 <- map2(index_names, metric_names, plot_index_2)
+index_plot3 <- map2(index_grid$index, index_grid$view, plot_index_3)
+index_plot7 <- pmap(list(index_grid$index, index_grid$view, rep(index_labels, each = 3)),
+                    plot_index_7)
+
+# make headings 
+# make_heading <- function(label) {
+#   ggplot() +
+#     annotate("text", x = 0.5, y = 0.55, label = label,
+#              size = 4, fontface = "bold") +
+#     expand_limits(x = c(0, 1), y = c(0, 1)) +   
+#     coord_cartesian(clip = "off") +
+#     theme_void() +
+#     theme(plot.margin = margin(-10, 0, 0, 0))
+# }
+# 
+# titles <- list(
+#   make_heading("Species Richness"),
+#   make_heading("Functional Richness"),
+#   make_heading("Functional Evenness"),
+#   make_heading("Functional Divergence"),
+#   make_heading("Functional Dispersion")
+# )
+
+
+# Combine all plots
+# (titles[[1]] /
+    (index_plot1 + index_plot2[[1]] + index_plot3[[3]] + plot_layout(ncol = 3)) /
+    # titles[[2]] /
+    (index_plot7[[4]] + index_plot2[[2]] + index_plot3[[6]]+ plot_layout(ncol = 3)) / 
+    # titles[[3]] / 
+    (index_plot7[[7]] + index_plot2[[3]] + index_plot3[[9]]+ plot_layout(ncol = 3)) / 
+    # titles[[4]] / 
+    (index_plot7[[10]] + index_plot2[[4]] + index_plot3[[12]]+ plot_layout(ncol = 3)) / 
+    # titles[[5]] / 
+    (index_plot4 + index_plot5 + index_plot6 + plot_layout(ncol = 3)) 
+  # plot_layout(heights = c(0.5, 1, 0.5, 1, 0.5, 1, 0.5, 1, 0.5, 1))
+
+ggsave(here("figures", "Fig_4.png"), 
+       width = 174, height = 200, units = "mm", dpi = 300)
+
+####
+
+site_p <- mFD_results_long %>% 
+  ggplot(aes(x = site, y = value)) + 
+  geom_boxplot() +
+  geom_point(alpha = 0.5) +
+  theme_classic() +
+  labs(x = "Site") +
+  facet_wrap(~metric, scales = "free_y", ncol = 1) +
+  theme(strip.background = element_blank(),
+        strip.text = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+
+year_p <- mFD_results_long %>% 
+  ggplot(aes(x = year, y = value)) + 
+  geom_boxplot() +
+  geom_point(alpha = 0.5) +
+  theme_classic() +
+  labs(x = "Year") +
+  facet_wrap(~metric, scales = "free_y", ncol = 1) +
+  theme(strip.background = element_blank(),
+        strip.text = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+
+ipa_p <- mFD_results_long %>% 
+  ggplot(aes(x = ipa, y = value)) + 
+  geom_boxplot() +
+  geom_point(alpha = 0.5) +
+  theme_classic() +
+  labs(x = "Condition\ncategory") +
+  facet_wrap(~metric, scales = "free_y", 
+             ncol = 1,
+             strip.position = 'left',
+             labeller = as_labeller(c('Species Richness' = 'Species\nRichness',
+                                      'FRic'= 'Functional\nRichness',
+                                      'FEve'= 'Functional\nEvenness',
+                                      'FDiv' = 'Functional\nDivergence',
+                                      'FDis' = 'Functional\nDispersion'))) +
+  theme(strip.background = element_blank(),
+        strip.placement='outside',
+        axis.title.y = element_blank(),
+        axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+
+
+ipa_p + year_p + site_p 
+
+####
+
 plot_index_sc <- function(index_name, metric_name) {
   ggplot(mFD_results, aes(y = .data[[index_name]], x = ipa)) +
     geom_boxplot() +
