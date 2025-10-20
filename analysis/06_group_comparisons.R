@@ -10,10 +10,10 @@ library(multcompView)
 
 set.seed(2025)
 
-site_colors <- rev(c("#8c510a","#d8b365", 
-                     "lightgoldenrod",
-                     "lightblue",
-                     "#5ab4ac", "#01665e"))
+# site_colors <- rev(c("#8c510a","#d8b365", 
+#                      "lightgoldenrod",
+#                      "lightblue",
+#                      "#5ab4ac", "#01665e"))
 
 #load custom functions
 source(here("analysis", "group_comparison_functions.R"))
@@ -69,17 +69,6 @@ mFD_results %>%
 
 
 ## visualize differences 
-#### figure S2, FD by ipa ####
-ipa_FD <- mFD_results_long %>% 
-  ggplot(aes(x = ipa, y = value)) +
-  geom_boxplot() +
-  geom_point(alpha = 0.4, size = 2, show.legend = FALSE) +
-  theme_classic() +
-  labs(x = "Condition category", y = "Value", color = "Site") + 
-  theme(strip.background = element_rect(fill = NA, colour = NA),
-        strip.text.x = element_text(" ")) +
-  facet_wrap(~ metric, scales = "free_y", ncol = 1, nrow = 5) 
-
 #### Fig 4 ####
 
 metric_names <- c("Species Richness",
@@ -90,7 +79,7 @@ metric_names <- c("Species Richness",
 
 index_plot1 <- mFD_results %>% 
   ggplot(aes(x = ipa, y = Species_Richness)) +
-  geom_boxplot() +
+  geom_boxplot(fill = "lightgrey") +
   geom_point(alpha = 0.5) +
   theme_classic() +
   labs(x = " ", y = "Species\nRichness") + 
@@ -99,7 +88,7 @@ index_plot1 <- mFD_results %>%
 
 plot_index_2 <- function(index, metric) {
   ggplot(mFD_results, aes(y = .data[[index]], x = site)) +
-    geom_boxplot() +
+    geom_boxplot(fill = "lightgrey") +
     geom_point(alpha = 0.5) +
     theme_classic() +
     labs(y = " ", x = " ") +
@@ -109,7 +98,7 @@ plot_index_2 <- function(index, metric) {
 
 plot_index_3 <- function(index, view) {
   ggplot(mFD_results, aes(y = .data[[index]], x = .data[[view]])) +
-    geom_boxplot() +
+    geom_boxplot(fill = "lightgrey") +
     geom_point(alpha = 0.5) +
     theme_classic() +
     labs(y = " ", x = " ") +
@@ -119,7 +108,7 @@ plot_index_3 <- function(index, view) {
 
 index_plot4 <- mFD_results %>% 
   ggplot(aes(x = ipa, y = FDis)) +
-  geom_boxplot() +
+  geom_boxplot(fill = "lightgrey") +
   geom_point(alpha = 0.5) +
   theme_classic() +
   labs(x = "Shoreline Condition", y = "Functional\nDispersion") + 
@@ -128,7 +117,7 @@ index_plot4 <- mFD_results %>%
 
 index_plot5 <- mFD_results %>% 
   ggplot(aes(x = site, y = FDis)) +
-  geom_boxplot() +
+  geom_boxplot(fill = "lightgrey") +
   geom_point(alpha = 0.5) +
   theme_classic() +
   labs(x = "Site", y = " ") +
@@ -137,7 +126,7 @@ index_plot5 <- mFD_results %>%
 
 index_plot6 <- mFD_results %>% 
   ggplot(aes(x = year, y = FDis)) +
-  geom_boxplot() +
+  geom_boxplot(fill = "lightgrey") +
   geom_point(alpha = 0.5) +
   theme_classic() +
   labs(x = "Year", y = " ") + 
@@ -146,7 +135,7 @@ index_plot6 <- mFD_results %>%
 
 plot_index_7 <- function(index, view, index_label) {
   ggplot(mFD_results, aes(y = .data[[index]], x = .data[[view]])) +
-    geom_boxplot() +
+    geom_boxplot(fill = "lightgrey") +
     geom_point(alpha = 0.5) +
     theme_classic() +
     theme(axis.text.x=element_blank(),
@@ -249,6 +238,25 @@ ipa_disp_pvals <- pmap_dfc(ipa_arg_list, compare_disp_pval) %>%
   select(!contains("..."))
 #no significant differences between shoreline conditions
 
+# dispersion between years
+year_dispersions <- mFD_results %>% 
+  select(site:year) %>% 
+  cbind(map2_dfc(metrics, "year", compare_dispersion)) %>% 
+  pivot_longer(cols = !site:year, names_to = "metric") %>% 
+  mutate(metric = factor(metric, levels = metrics))
+
+ggplot(data = year_dispersions) +
+  geom_boxplot(aes(x = year, y = value)) +
+  theme_classic() + 
+  facet_wrap(~metric, scales = "free")
+
+year_arg_list <- list(metrics, rep("year", times = 5), rep(list(plot_shuffle), times = 5))
+
+year_disp_pvals <- pmap_dfc(year_arg_list, compare_disp_pval) %>% 
+  rename(pairs = "pair...1") %>% 
+  select(!contains("..."))
+#no significant differences between years except FDiv dispersion is lower in 2019 and 2022
+
 ## site dispersions
 site_dispersions <- mFD_results %>% 
   select(site:year) %>% 
@@ -291,38 +299,25 @@ site_dispersions_signif <- full_join(site_dispersions, site_signif) %>%
                          labels = c("Species Richness", "Functional Richness", "Functional Evenness", "Functional Divergence", "Functional Dispersion"))) %>%
   mutate(letters = ifelse(metric %in% c("Functional Richness", "Functional Dispersion") , NA, letters)) 
 
-site_dispersions_signif %>% 
-  filter(!metric == "Species Richness") %>% 
-  ggplot() +
-  geom_boxplot(aes(x = site, y = value)) +
-  geom_point(aes(y = ymax, x = site), color = "white", size = 0) +
-  geom_text(aes(label = letters, y = max, x = site), vjust = -0.5) +
-  theme_classic() + 
-  labs(y = "Distance to median", x = "Site") +
-  facet_wrap(~metric, ncol = 1, scales = "free")
 
 site_dispersions_signif %>% 
   filter(site == "FAM" | site == "EDG") %>% 
   group_by(site, metric) %>% 
   summarize(mean = mean(value), median = median(value))
 
-# dispersion between years
-year_dispersions <- mFD_results %>% 
-  select(site:year) %>% 
-  cbind(map2_dfc(metrics, "year", compare_dispersion)) %>% 
-  pivot_longer(cols = !site:year, names_to = "metric") %>% 
-  mutate(metric = factor(metric, levels = metrics))
-
-ggplot(data = year_dispersions) +
-  geom_boxplot(aes(x = year, y = value)) +
+#### Fig 5 ####
+site_dispersions_signif %>% 
+  filter(!metric == "Species Richness") %>% 
+  ggplot() +
+  geom_boxplot(aes(x = site, y = value), fill = "lightgrey") +
+  geom_point(aes(y = ymax, x = site), color = "white", size = 0) +
+  geom_text(aes(label = letters, y = max, x = site), vjust = -0.5) +
   theme_classic() + 
-  facet_wrap(~metric, scales = "free")
+  labs(y = "Distance to median", x = "Site") +
+  facet_wrap(~metric, ncol = 1, scales = "free")
 
-year_arg_list <- list(metrics, rep("year", times = 5), rep(list(plot_shuffle), times = 5))
+ggsave(here("figures", "Fig_5.png"), 
+       width = 84, height = 150, units = "mm", dpi = 300)
 
-year_disp_pvals <- pmap_dfc(year_arg_list, compare_disp_pval) %>% 
-  rename(pairs = "pair...1") %>% 
-  select(!contains("..."))
-#no significant differences between years except FDiv dispersion is lower in 2019 and 2022
 
 
