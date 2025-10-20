@@ -51,16 +51,18 @@ hulls <- points %>%
   slice(chull(MDS1,MDS2))
 
 nmds_all <- ggplot() +
-  geom_point(data = points, aes(x = MDS1, y = MDS2, color = site, shape = ipa), size = 3) + 
-  geom_text_repel(data = points, 
-                  aes(x = MDS1, y = MDS2, color = site, label = yr_abb), 
-                  max.overlaps = 20, show.legend = FALSE) +
+  geom_point(data = points, aes(x = MDS1, y = MDS2, 
+                                color = site, shape = ipa), 
+             size = 2) + 
+  # geom_text_repel(data = points, 
+  #                 aes(x = MDS1, y = MDS2, color = site, label = yr_abb), 
+  #                 max.overlaps = 20, show.legend = FALSE) +
   scale_color_manual(values = site_colors) +
   scale_fill_manual(values = site_colors) +
-  theme_classic() +
+  theme_classic(base_size = 10) +
   annotate("text", x = -1, y = 1.4, 
            label = paste("Stress = ", round(nmds$stress, 3))) +
-  labs(color = "Site", shape = "Condition Category")
+  labs(color = "Site", shape = "Condition\ncategory")
 
 #### nmds ####
 
@@ -108,7 +110,10 @@ wq_vec_df <- wq_vecs %>%
 
 #### Fig 2 ####
 nmds_abb_plot <- ggplot() +
-  geom_point(data = points_abb, aes(x = MDS1, y = MDS2, color = site, shape = ipa), size = 3) + 
+  geom_point(data = points_abb, 
+             aes(x = MDS1, y = MDS2, 
+                 color = site, shape = ipa), 
+             size = 2) + 
   geom_text_repel(data = points_abb, 
                   aes(x = MDS1, y = MDS2, color = site, label = yr_abb),
                   max.overlaps = 20, show.legend = FALSE) +
@@ -120,11 +125,12 @@ nmds_abb_plot <- ggplot() +
   scale_color_manual(values = site_colors) +
   scale_fill_manual(values = site_colors) +
   theme_classic(base_size = 10) +
-  annotate("text", x = -1.4, y = 1.4, 
+  annotate("text", x = -1.3, y = 1.4, 
            label = paste("Stress = ", round(nmds_abb$stress, digits = 3))) +
-  labs(color = "Site", shape = "Condition Category", y = "")
+  labs(color = "Site", shape = "Condition\ncategory", y = "")
 
-nmds_all + nmds_abb_plot + plot_layout(guides = "collect") + plot_annotation(tag_levels = 'A')
+nmds_all + nmds_abb_plot + plot_layout(guides = "collect") 
+# plot_annotation(tag_levels = 'A')
 
 ggsave(here("figures", "Fig_2.png"), 
        width = 174, height = 100, units = "mm", dpi = 300)
