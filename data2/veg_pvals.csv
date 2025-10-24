@@ -1,5 +1,0 @@
-X,Degrees_Freedom,SumOfSqs_Species_Richness,R2_Species_Richness,F_Species_Richness,Pr(>F)_Species_Richness,SumOfSqs_FRic,R2_FRic,F_FRic,Pr(>F)_FRic,SumOfSqs_FEve,R2_FEve,F_FEve,Pr(>F)_FEve,SumOfSqs_FDiv,R2_FDiv,F_FDiv,Pr(>F)_FDiv,SumOfSqs_FDis,R2_FDis,F_FDis,Pr(>F)_FDis
-veg,1,308.347,0.223,33.221,0.094,0.31,0.165,25.456,0.267,0.203,0.065,5.05,0.296,0.328,0.047,3.484,0.161,0.555,0.113,9.05,0.053
-site,4,460.389,0.333,12.401,NA,0.765,0.408,15.726,NA,0.273,0.087,1.699,NA,0.436,0.062,1.157,NA,0.299,0.061,1.219,NA
-Residual,66,612.583,0.443,NA,NA,0.803,0.428,NA,NA,2.65,0.848,NA,NA,6.221,0.891,NA,NA,4.045,0.826,NA,NA
-Total,71,1381.319,1,NA,NA,1.878,1,NA,NA,3.126,1,NA,NA,6.986,1,NA,NA,4.898,1,NA,NA
