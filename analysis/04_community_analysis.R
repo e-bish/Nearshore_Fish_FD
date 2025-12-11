@@ -176,8 +176,7 @@ nmds_abb_plot <- ggplot() +
            label = paste("Stress = ", round(nmds_abb$stress, digits = 3))) +
   labs(color = "Site", shape = "Condition\ncategory", y = "")
 
-nmds_all + nmds_abb_plot + plot_layout(guides = "collect") 
-# plot_annotation(tag_levels = 'A')
+nmds_all + nmds_abb_plot + plot_layout(guides = "collect") + plot_annotation(tag_levels = 'A')
 
 ggsave(here("figures", "Fig_2.png"), 
        width = 174, height = 100, units = "mm", dpi = 300)
