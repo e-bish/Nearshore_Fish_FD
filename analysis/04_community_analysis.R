@@ -10,6 +10,7 @@ library(patchwork)
 set.seed(2025)
 load(here("data", "net_core.Rdata")) #created in "02_tidy_data.R"
 load(here("data", "fish_L_full.Rdata")) #created in "03_create_matrices.R"
+fish_Q <- read_csv(here("data", "fish_traits.csv")) #created in "03_create_matrices.R"
 load(here("data", "wq_tb.Rdata")) #created in "Figure_S1_water_quality.R"
 
 site_colors <- rev(c("#8c510a","#d8b365", 
@@ -28,9 +29,55 @@ net_core %>%
 #eelgrass community
 net_core %>% 
   filter(tax_group %in% c("Stichaeid", "Sygnathid", "Aulorhynchus", "Pholidae")) %>% 
-  summarize(sum = sum(species_count), prop = sum/core_catch)
+  summarize(sum = sum(species_count), prop = sum/total_catch)
 
-#### nmds ####
+#catch by station
+catch_by_station <- net_core %>% 
+  group_by(station) %>% 
+  summarize(catch_sum = sum(species_count)) %>% 
+  mutate(prop = catch_sum/sum(total_catch))
+
+# all_catch_plot <- catch_by_station %>% 
+#   ggplot(aes(x = factor(station, labels = c("shallow", "middle", "deep")), 
+#                         y = catch_sum)) +
+#   geom_bar(stat = 'identity') +
+#   theme_classic() + 
+#   labs(x = "Station", y = "Sum of Catch", title = "All species catch")
+  
+#demersal catch by station
+demersal_spp <- fish_Q %>% 
+  filter(DemersPelag %in% "demersal")
+
+demersal_catch_by_station <- net_core %>% 
+  filter(ComName %in% demersal_spp$ComName) %>% 
+  group_by(station) %>% 
+  summarize(catch_sum = sum(species_count)) %>% 
+  mutate(prop = catch_sum/sum(catch_sum))
+
+# demersal_catch_plot <- demersal_catch_by_station %>% 
+#   ggplot(aes(x = factor(station, labels = c("shallow", "middle", "deep")), 
+#              y = catch_sum)) +
+#   geom_bar(stat = 'identity') +
+#   theme_classic() + 
+#   labs(x = "Station", y = "Sum of catch", title = "Demersal species catch")
+# 
+# all_catch_plot + demersal_catch_plot + plot_annotation(tag_levels = 'A')
+
+net_core %>% 
+  mutate(Demers = ifelse(ComName %in% demersal_spp$ComName, "Demersal", "Not Demersal")) %>% 
+  group_by(Demers, station) %>% 
+  summarize(catch_sum = sum(species_count)) %>% 
+  ggplot(aes(x = factor(station, labels = c("shallow", "middle", "deep")), 
+             y = catch_sum,
+             fill = factor(Demers, levels = c("Not Demersal", "Demersal")))) +
+  geom_bar(stat = 'identity', color = "black") +
+  scale_fill_manual(values = c("white", "lightgrey")) +
+  theme_classic() +
+  labs(x = "Station", y = "Sum of catch", 
+       fill = "Position in the\nwater column")
+
+
+#### nmds 1 ####
 fish_L_all <- fish_L_full %>% 
   mutate(ipa = ifelse(ipa == "Natural2", "Natural", ipa)) %>% 
   mutate(site = factor(site, levels = c("FAM", "TUR", "COR", "SHR", "DOK", "EDG")),
@@ -64,7 +111,7 @@ nmds_all <- ggplot() +
            label = paste("Stress = ", round(nmds$stress, 3))) +
   labs(color = "Site", shape = "Condition\ncategory")
 
-#### nmds ####
+#### nmds 2 ####
 
 wq_tb_exp <- wq_tb %>%
   pivot_longer(c(secchi_depth_m, do_mg_l, salinity_ppm, temperature), names_to = "metric") %>%
