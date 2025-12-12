@@ -9,6 +9,7 @@ library(pairwiseAdonis)
 library(multcompView)
 
 set.seed(2025)
+metrics <- c("Species_Richness", "FRic", "FEve", "FDiv", "FDis")
 
 # site_colors <- rev(c("#8c510a","#d8b365", 
 #                      "lightgoldenrod",
@@ -67,110 +68,6 @@ mFD_results %>%
 mFD_results %>% 
   summarize(min = min(FDis), max= max(FDis), avg = mean(FDis), sd = sd(FDis))
 
-
-## visualize differences 
-#### Fig 4 ####
-
-metric_names <- c("Species Richness",
-                  "Functional Richness",
-                  "Functional Evenness",
-                  "Functional Divergence",
-                  "Functional Dispersion")
-
-index_plot1 <- mFD_results %>% 
-  ggplot(aes(x = ipa, y = Species_Richness)) +
-  geom_boxplot(fill = "lightgrey") +
-  geom_point(alpha = 0.5) +
-  theme_classic() +
-  labs(x = " ", y = "Species\nRichness") + 
-  theme(plot.margin = unit(c(0, 0, -5, 0.5), "mm"),
-        axis.text.x=element_blank())
-
-plot_index_2 <- function(index, metric) {
-  ggplot(mFD_results, aes(y = .data[[index]], x = site)) +
-    geom_boxplot(fill = "lightgrey") +
-    geom_point(alpha = 0.5) +
-    theme_classic() +
-    labs(y = " ", x = " ") +
-    theme(axis.text.x=element_blank(),
-          plot.margin = unit(c(0, 0.5, -5, 0.5), "mm"))
-}
-
-plot_index_3 <- function(index, view) {
-  ggplot(mFD_results, aes(y = .data[[index]], x = .data[[view]])) +
-    geom_boxplot(fill = "lightgrey") +
-    geom_point(alpha = 0.5) +
-    theme_classic() +
-    labs(y = " ", x = " ") +
-    theme(plot.margin = unit(c(0, 0.5, -5, 0.5), "mm"),
-          axis.text.x=element_blank())
-}
-
-index_plot4 <- mFD_results %>% 
-  ggplot(aes(x = ipa, y = FDis)) +
-  geom_boxplot(fill = "lightgrey") +
-  geom_point(alpha = 0.5) +
-  theme_classic() +
-  labs(x = "Shoreline Condition", y = "Functional\nDispersion") + 
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
-    plot.margin = unit(c(0, 0.5, -5, 0.5), "mm"))
-
-index_plot5 <- mFD_results %>% 
-  ggplot(aes(x = site, y = FDis)) +
-  geom_boxplot(fill = "lightgrey") +
-  geom_point(alpha = 0.5) +
-  theme_classic() +
-  labs(x = "Site", y = " ") +
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
-        plot.margin = unit(c(0, 0.5, -5, 0.5), "mm"))
-
-index_plot6 <- mFD_results %>% 
-  ggplot(aes(x = year, y = FDis)) +
-  geom_boxplot(fill = "lightgrey") +
-  geom_point(alpha = 0.5) +
-  theme_classic() +
-  labs(x = "Year", y = " ") + 
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
-    plot.margin = unit(c(0, 0.5, -5, 0.5), "mm"))
-
-plot_index_7 <- function(index, view, index_label) {
-  ggplot(mFD_results, aes(y = .data[[index]], x = .data[[view]])) +
-    geom_boxplot(fill = "lightgrey") +
-    geom_point(alpha = 0.5) +
-    theme_classic() +
-    theme(axis.text.x=element_blank(),
-          plot.margin = unit(c(0, 0.5, -5, 0.5), "mm")) + 
-    labs(y = index_label, x = " ") 
-}
-
-# Create all combinations
-
-index_names <- c("Species_Richness", "FRic", "FEve", "FDiv", "FDis")
-index_labels <- c("Species\nRichness",
-                  "Functional\nRichness",
-                  "Functional\nEvenness",
-                  "Functional\nDivergence",
-                  "Functional\nDispersion")
-views <- c("ipa", "site", "year")
-
-index_grid <- expand_grid(index = index_names, view = views)
-
-# Use map2 to iterate properly
-index_plot2 <- map2(index_names, metric_names, plot_index_2)
-index_plot3 <- map2(index_grid$index, index_grid$view, plot_index_3)
-index_plot7 <- pmap(list(index_grid$index, index_grid$view, rep(index_labels, each = 3)),
-                    plot_index_7)
-
-# Combine all plots
-(index_plot1 + index_plot2[[1]] + index_plot3[[3]] + plot_layout(ncol = 3)) /
-    (index_plot7[[4]] + index_plot2[[2]] + index_plot3[[6]]+ plot_layout(ncol = 3)) / 
-    (index_plot7[[7]] + index_plot2[[3]] + index_plot3[[9]]+ plot_layout(ncol = 3)) / 
-    (index_plot7[[10]] + index_plot2[[4]] + index_plot3[[12]]+ plot_layout(ncol = 3)) / 
-    (index_plot4 + index_plot5 + index_plot6 + plot_layout(ncol = 3)) 
-
-ggsave(here("figures", "Fig_4.png"), 
-       width = 174, height = 215, units = "mm", dpi = 300)
-
 #### Permute factors at the shoreline level ####
 
 ## shuffle shorelines to assess site and shoreline condition variables ##
@@ -207,19 +104,186 @@ plot_permanova_df <- read_csv(here("data", "plot_permanova_df.csv"))
 
 ## follow up pairwise tests 
 
-pairwise.adonis2(mFD_results['FRic'] ~ site, data = mFD_results,
+pairwise_FRic_site <- pairwise.adonis2(mFD_results['FRic'] ~ site, data = mFD_results,
                  permutations = 999, method = "euclidean")
 #COR higher than any other site
 
-pairwise.adonis2(mFD_results['FRic'] ~ year, data = mFD_results,
+FRic_site_pvals <- data.frame(pvals = NA, pairs = NA)
+
+for (i in 2:length(pairwise_FRic_site)) {
+  pvals <- pairwise_FRic_site[[i]]$'Pr(>F)'
+  FRic_site_pvals[i,1] <- pvals[1]
+  FRic_site_pvals[i,2] <- names(pairwise_FRic_site)[[i]]
+}
+
+FRic_site_pvals <- FRic_site_pvals %>% 
+  filter(!is.na(pairs)) %>% 
+  mutate(pairs = str_replace_all(pairs, "_vs_", "-")) %>% 
+  pull(pvals, pairs) 
+
+FRic_site_letters <- multcompLetters(FRic_site_pvals)$Letters %>% 
+  as.data.frame() %>% 
+  rename(FRic_letters = !!1) %>% 
+  rownames_to_column(var = "site") 
+
+
+pairwise_FRic_year <- pairwise.adonis2(mFD_results['FRic'] ~ year, data = mFD_results,
                  permutations = 999, method = "euclidean")
 #2018 v 2019 & 2022
 
-pairwise.adonis2(mFD_results['FEve'] ~ site, data = mFD_results,
+FRic_year_pvals <- data.frame(pvals = NA, pairs = NA)
+
+for (i in 2:length(pairwise_FRic_year)) {
+  pvals <- pairwise_FRic_year[[i]]$'Pr(>F)'
+  FRic_year_pvals[i,1] <- pvals[1]
+  FRic_year_pvals[i,2] <- names(pairwise_FRic_year)[[i]]
+}
+
+FRic_year_pvals <- FRic_year_pvals %>% 
+  filter(!is.na(pairs)) %>% 
+  mutate(pairs = str_replace_all(pairs, "_vs_", "-")) %>% 
+  pull(pvals, pairs) 
+
+FRic_year_letters <- multcompLetters(FRic_year_pvals)$Letters %>% 
+  as.data.frame() %>% 
+  rename(FRic_letters = !!1) %>% 
+  rownames_to_column(var = "site") 
+
+
+pairwise_FEve_site <- pairwise.adonis2(mFD_results['FEve'] ~ site, data = mFD_results,
                  permutations = 999, method = "euclidean")
 # DOK vs.FAM, COR, TUR, SHR
 
-# dispersion between shoreline conditions
+FEve_site_pvals <- data.frame(pvals = NA, pairs = NA)
+
+for (i in 2:length(pairwise_FEve_site)) {
+  pvals <- pairwise_FEve_site[[i]]$'Pr(>F)'
+  FEve_site_pvals[i,1] <- pvals[1]
+  FEve_site_pvals[i,2] <- names(pairwise_Eve_site)[[i]]
+}
+
+FEve_site_pvals <- FEve_site_pvals %>% 
+  filter(!is.na(pairs)) %>% 
+  mutate(pairs = str_replace_all(pairs, "_vs_", "-")) %>% 
+  pull(pvals, pairs) 
+
+FEve_site_letters <- multcompLetters(FEve_site_pvals)$Letters %>% 
+  as.data.frame() %>% 
+  rename(FEve_letters = !!1) %>% 
+  rownames_to_column(var = "site") 
+
+## visualize differences 
+#### Fig 4 ####
+
+ipa_pvals <- 
+
+
+ipa_letters <- map_dfc(metrics, create_letter_df)  %>% 
+  rownames_to_column(var = "ipa") %>% 
+  pivot_longer(!ipa, names_to = "metric", values_to = "letters")
+
+metric_names <- c("Species Richness",
+                  "Functional Richness",
+                  "Functional Evenness",
+                  "Functional Divergence",
+                  "Functional Dispersion")
+
+index_plot1 <- mFD_results %>% 
+  ggplot(aes(x = ipa, y = Species_Richness)) +
+  geom_boxplot(fill = "lightgrey") +
+  geom_point(alpha = 0.5) +
+  # geom_text(ipa_letters, aes(label = letters, y = max, x = ipa), vjust = -0.5) +
+  theme_classic() +
+  labs(x = " ", y = "Species\nRichness") + 
+  theme(plot.margin = unit(c(0, 0, -5, 0.5), "mm"),
+        axis.text.x=element_blank())
+
+plot_index_2 <- function(index, metric) {
+  ggplot(mFD_results, aes(y = .data[[index]], x = site)) +
+    geom_boxplot(fill = "lightgrey") +
+    geom_point(alpha = 0.5) +
+    theme_classic() +
+    labs(y = " ", x = " ") +
+    theme(axis.text.x=element_blank(),
+          plot.margin = unit(c(0, 0.5, -5, 0.5), "mm"))
+}
+
+plot_index_3 <- function(index, view) {
+  ggplot(mFD_results, aes(y = .data[[index]], x = .data[[view]])) +
+    geom_boxplot(fill = "lightgrey") +
+    geom_point(alpha = 0.5) +
+    theme_classic() +
+    labs(y = " ", x = " ") +
+    theme(plot.margin = unit(c(0, 0.5, -5, 0.5), "mm"),
+          axis.text.x=element_blank())
+}
+
+index_plot4 <- mFD_results %>% 
+  ggplot(aes(x = ipa, y = FDis)) +
+  geom_boxplot(fill = "lightgrey") +
+  geom_point(alpha = 0.5) +
+  theme_classic() +
+  labs(x = "Shoreline Condition", y = "Functional\nDispersion") + 
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
+        plot.margin = unit(c(0, 0.5, -5, 0.5), "mm"))
+
+index_plot5 <- mFD_results %>% 
+  ggplot(aes(x = site, y = FDis)) +
+  geom_boxplot(fill = "lightgrey") +
+  geom_point(alpha = 0.5) +
+  theme_classic() +
+  labs(x = "Site", y = " ") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
+        plot.margin = unit(c(0, 0.5, -5, 0.5), "mm"))
+
+index_plot6 <- mFD_results %>% 
+  ggplot(aes(x = year, y = FDis)) +
+  geom_boxplot(fill = "lightgrey") +
+  geom_point(alpha = 0.5) +
+  theme_classic() +
+  labs(x = "Year", y = " ") + 
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
+        plot.margin = unit(c(0, 0.5, -5, 0.5), "mm"))
+
+plot_index_7 <- function(index, view, index_label) {
+  ggplot(mFD_results, aes(y = .data[[index]], x = .data[[view]])) +
+    geom_boxplot(fill = "lightgrey") +
+    geom_point(alpha = 0.5) +
+    theme_classic() +
+    theme(axis.text.x=element_blank(),
+          plot.margin = unit(c(0, 0.5, -5, 0.5), "mm")) + 
+    labs(y = index_label, x = " ") 
+}
+
+# Create all combinations
+
+index_names <- c("Species_Richness", "FRic", "FEve", "FDiv", "FDis")
+index_labels <- c("Species\nRichness",
+                  "Functional\nRichness",
+                  "Functional\nEvenness",
+                  "Functional\nDivergence",
+                  "Functional\nDispersion")
+views <- c("ipa", "site", "year")
+
+index_grid <- expand_grid(index = index_names, view = views)
+
+# Use map2 to iterate properly
+index_plot2 <- map2(index_names, metric_names, plot_index_2)
+index_plot3 <- map2(index_grid$index, index_grid$view, plot_index_3)
+index_plot7 <- pmap(list(index_grid$index, index_grid$view, rep(index_labels, each = 3)),
+                    plot_index_7)
+
+# Combine all plots
+(index_plot1 + index_plot2[[1]] + index_plot3[[3]] + plot_layout(ncol = 3)) /
+  (index_plot7[[4]] + index_plot2[[2]] + index_plot3[[6]]+ plot_layout(ncol = 3)) / 
+  (index_plot7[[7]] + index_plot2[[3]] + index_plot3[[9]]+ plot_layout(ncol = 3)) / 
+  (index_plot7[[10]] + index_plot2[[4]] + index_plot3[[12]]+ plot_layout(ncol = 3)) / 
+  (index_plot4 + index_plot5 + index_plot6 + plot_layout(ncol = 3)) 
+
+ggsave(here("figures", "Fig_4.png"), 
+       width = 174, height = 215, units = "mm", dpi = 300)
+
+#### dispersion between shoreline conditions ####
 ipa_dispersions <- mFD_results %>% 
   select(site:year) %>% 
   cbind(map2_dfc(metrics, "ipa", compare_dispersion)) %>% 
@@ -277,7 +341,7 @@ site_disp_pvals <- pmap_dfc(site_arg_list, compare_disp_pval) %>%
   rename(pairs = "pair...1") %>% 
   dplyr::select(!contains("..."))
 
-site_letters <- map_dfc(metrics, create_letter_df)  %>% 
+site_letters <- map_dfc(metrics, create_disp_letter_df)  %>% 
   rownames_to_column(var = "site") %>% 
   pivot_longer(!site, names_to = "metric", values_to = "letters")
 
