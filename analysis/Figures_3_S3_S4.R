@@ -14,8 +14,6 @@ SOS_core_sites <- factor(c("FAM", "TUR", "COR", "SHR", "DOK", "EDG"),
 fish_cwm <- functcomp(x = fish.list$trait,
                       a = as.matrix(fish.list$abund),
                       CWM.type = "dom")
-?functcomp
-
 
 fish_cwm_df <- fish_cwm %>% 
   rownames_to_column( "sample") %>% 
@@ -70,7 +68,8 @@ length_plot <- length_cwm %>%
         plot.title = element_text(hjust = 0.5, size = 10)) +
   labs(y = "CWM of\nmean lengths (mm)", title = "Size")
 
-length_plot + trait_wrap_plot + plot_layout(ncol = 1, heights = c(0.5,1)) + plot_layout(guides = "collect") 
+length_plot + trait_wrap_plot + plot_layout(ncol = 1, heights = c(0.5,1)) + 
+  plot_layout(guides = "collect") 
 
 ggsave(here("figures", "Fig_3.png"), 
        width = 174, height = 160, units = "mm", dpi = 300)
