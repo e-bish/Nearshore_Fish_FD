@@ -41,19 +41,36 @@ trait_cols <- c(bs_col, dp_col,
                 mi_col,
                 fg_col)
 
+facet_labels <- c("B", "C", "D", "E")
+
+panel_labels <- data.frame(
+  trait_group = factor(
+    unique(fish_cwm_long$trait_group),
+    levels = levels(factor(fish_cwm_long$trait_group))
+  ),
+  label = LETTERS[2:5]   # B–E
+)
+
 #by site
 trait_wrap_plot <- fish_cwm_long %>% 
   ggplot(aes(x = site, fill = factor(traits, levels = unique(traits)))) +
   geom_bar(stat = "count", position = "fill") + 
+  annotate(geom = "text", label = "A", 
+           x = -Inf, y = Inf,
+           hjust = -0.3, vjust = 0,
+           inherit.aes = FALSE, 
+           size = 4, fontface = "bold") +
+  coord_cartesian(clip = "off") +
   theme_classic() + 
   scale_fill_manual(values = trait_cols) +
   theme(strip.background = element_rect(fill = NA, colour = NA),
-        strip.text.x = element_text(size = 10)) +
+        strip.text.x = element_text(size = 10, margin = margin(b=1,t=1)),
+        panel.spacing.y = unit(0.5, "lines")) +
   facet_wrap(~factor(trait_group, 
                      labels = c("Transverse shape",
                                 "Vertical distribition",
                                 "Feeding guild", 
-                                "Migration behavior"))) +
+                                "Migration behavior"))) + 
   labs(fill = "Trait value", y = "Relative abundance of\nCWM trait values", x = "Site")
 
 length_cwm <- fish_cwm_df %>% 
@@ -63,9 +80,16 @@ length_plot <- length_cwm %>%
   ggplot(aes(x = site, y = mean_length_mm)) +
   geom_boxplot() + 
   geom_point(alpha = 0.4) +
+  annotate(geom = "text", label = "A", 
+           x = -Inf, y = Inf,
+           hjust = -0.3, vjust = 0,
+           inherit.aes = FALSE, 
+           size = 4, fontface = "bold") +
+  coord_cartesian(clip = "off") +
   theme_classic() + 
   theme(axis.title.x = element_blank(),
-        plot.title = element_text(hjust = 0.5, size = 10)) +
+        plot.title = element_text(hjust = 0.5, size = 10),
+        panel.spacing.y = unit(0.5, "lines")) +
   labs(y = "CWM of\nmean lengths (mm)", title = "Size")
 
 length_plot + trait_wrap_plot + plot_layout(ncol = 1, heights = c(0.5,1)) + 

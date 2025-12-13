@@ -107,8 +107,11 @@ nmds_all <- ggplot() +
   scale_color_manual(values = site_colors) +
   scale_fill_manual(values = site_colors) +
   theme_classic(base_size = 10) +
-  annotate("text", x = -1, y = 1.4, 
-           label = paste("Stress = ", round(nmds$stress, 3))) +
+  annotate("text", x = 0.7, y = 1.4, size = 3,
+           label = paste("Stress = ", round(nmds$stress, digits = 3))) +
+  annotate("text", label = "A", 
+           x = -2, y = 1.4,
+           size = 6, fontface = "bold") +
   labs(color = "Site", shape = "Condition\ncategory")
 
 #### nmds 2 ####
@@ -172,11 +175,15 @@ nmds_abb_plot <- ggplot() +
   scale_color_manual(values = site_colors) +
   scale_fill_manual(values = site_colors) +
   theme_classic(base_size = 10) +
-  annotate("text", x = -1.3, y = 1.4, 
+  annotate("text", x = 0.2, y = 1.4, size = 3,
            label = paste("Stress = ", round(nmds_abb$stress, digits = 3))) +
+  annotate("text", label = "B", 
+           x = -2, y = 1.4,
+           size = 6, fontface = "bold") +
   labs(color = "Site", shape = "Condition\ncategory", y = "")
 
-nmds_all + nmds_abb_plot + plot_layout(guides = "collect") + plot_annotation(tag_levels = 'A')
+nmds_all + nmds_abb_plot + plot_layout(guides = "collect")
+# + plot_annotation(tag_levels = 'A')
 
 ggsave(here("figures", "Fig_2.png"), 
        width = 174, height = 100, units = "mm", dpi = 300)
