@@ -30,6 +30,7 @@ calc_plot_permanova <- function(metric) {
 }
 
 
+#### extract letters for significant groupings
 #### calculate dispersion for each group
 compare_dispersion <- function(metric, scale) {
   
@@ -67,10 +68,10 @@ compare_disp_pval <- function(metric, scale, shuffle) {
 }
 
 #### extract letters for significant groupings
-create_letter_df <- function(metric) {
+create_disp_letter_df <- function(metric) {
   
   disp <- site_disp_pvals %>% 
-    pull(metric, pairs)
+    pull(FRic, pairs)
   
   letters <- as.data.frame(multcompLetters(disp)$Letters)
   
