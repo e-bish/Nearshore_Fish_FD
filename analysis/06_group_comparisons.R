@@ -11,10 +11,10 @@ library(multcompView)
 set.seed(2025)
 metrics <- c("Species_Richness", "FRic", "FEve", "FDiv", "FDis")
 
-# site_colors <- rev(c("#8c510a","#d8b365", 
-#                      "lightgoldenrod",
-#                      "lightblue",
-#                      "#5ab4ac", "#01665e"))
+site_colors <- rev(c("#8c510a","#d8b365",
+                     "lightgoldenrod",
+                     "lightblue",
+                     "#5ab4ac", "#01665e"))
 
 #load custom functions
 source(here("analysis", "group_comparison_functions.R"))
@@ -103,10 +103,12 @@ plot_permanova_df <- read_csv(here("data", "plot_permanova_df.csv"))
 
 ## follow up pairwise tests 
 #only 3 replicates per site_year so can't follow up on the interaction of site and year for Species Richness
-# mFD_results %>% 
-#   ggplot(aes(x = year, y = Species_Richness, color = site, shape = site)) +
-#   geom_point() +
-#   theme_classic()
+mFD_results %>%
+  ggplot(aes(x = year, y = Species_Richness, color = site, shape = site)) +
+  geom_point(size = 3) +
+  scale_color_manual(values = site_colors) +
+  labs(y = "Species Richness", x = "Year", color = "Site", shape = "Site") +
+  theme_classic()
 
 
 pairwise_FRic_site <- pairwise.adonis2(mFD_results['FRic'] ~ site, data = mFD_results,
