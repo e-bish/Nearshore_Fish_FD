@@ -41,8 +41,6 @@ trait_cols <- c(bs_col, dp_col,
                 mi_col,
                 fg_col)
 
-facet_labels <- c("B", "C", "D", "E")
-
 panel_labels <- data.frame(
   trait_group = factor(
     unique(fish_cwm_long$trait_group),
