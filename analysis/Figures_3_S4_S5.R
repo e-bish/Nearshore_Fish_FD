@@ -46,18 +46,20 @@ panel_labels <- data.frame(
     unique(fish_cwm_long$trait_group),
     levels = levels(factor(fish_cwm_long$trait_group))
   ),
-  label = LETTERS[2:5]   # B–E
+  trait_labels = LETTERS[2:5]   # B–E
 )
+
+fish_cwm_long <- fish_cwm_long %>% 
+  full_join(panel_labels)
 
 #by site
 trait_wrap_plot <- fish_cwm_long %>% 
   ggplot(aes(x = site, fill = factor(traits, levels = unique(traits)))) +
   geom_bar(stat = "count", position = "fill") + 
-  annotate(geom = "text", label = "A", 
+  geom_text(aes(label = trait_labels), 
            x = -Inf, y = Inf,
            hjust = -0.3, vjust = 0,
-           inherit.aes = FALSE, 
-           size = 4, fontface = "bold") +
+           size = 4) +
   coord_cartesian(clip = "off") +
   theme_classic() + 
   scale_fill_manual(values = trait_cols) +
@@ -72,17 +74,17 @@ trait_wrap_plot <- fish_cwm_long %>%
   labs(fill = "Trait value", y = "Relative abundance of\nCWM trait values", x = "Site")
 
 length_cwm <- fish_cwm_df %>% 
-  select(!body_shape_i:feeding_guild)
+  select(!body_shape_i:feeding_guild) %>% 
+  mutate(plot_label = "A")
 
 length_plot <- length_cwm %>% 
   ggplot(aes(x = site, y = mean_length_mm)) +
   geom_boxplot() + 
   geom_point(alpha = 0.4) +
-  annotate(geom = "text", label = "A", 
+  geom_text(aes(label = plot_label), 
            x = -Inf, y = Inf,
            hjust = -0.3, vjust = 0,
-           inherit.aes = FALSE, 
-           size = 4, fontface = "bold") +
+           size = 4) +
   coord_cartesian(clip = "off") +
   theme_classic() + 
   theme(axis.title.x = element_blank(),
@@ -100,10 +102,16 @@ ggsave(here("figures", "Fig_3.png"),
 ipa_trait_wrap <- fish_cwm_long %>% 
   ggplot(aes(x = ipa, fill = factor(traits, levels = unique(traits)))) +
   geom_bar(stat = "count", position = "fill") + 
+  geom_text(aes(label = trait_labels), 
+            x = -Inf, y = Inf,
+            hjust = -0.3, vjust = 0,
+            size = 4) +
+  coord_cartesian(clip = "off") +
   theme_classic() + 
   scale_fill_manual(values = trait_cols) +
   theme(strip.background = element_rect(fill = NA, colour = NA),
-        strip.text.x = element_text(size = 10)) +
+        strip.text.x = element_text(size = 10, margin = margin(b=1,t=1)),
+        panel.spacing.y = unit(0.5, "lines")) +
   facet_wrap(~factor(trait_group, 
                      labels = c("Transverse shape",
                                 "Vertical distribition",
@@ -111,21 +119,25 @@ ipa_trait_wrap <- fish_cwm_long %>%
                                 "Migration behavior"))) +
   labs(fill = "Trait value", y = "Relative abundance of\nCWM trait values", x = "Condition Category")
 
-length_cwm <- fish_cwm_df %>% 
-  select(!body_shape_i:feeding_guild)
 
 ipa_length_plot <- length_cwm %>% 
   ggplot(aes(x = ipa, y = mean_length_mm)) +
   geom_boxplot() + 
+  geom_text(aes(label = plot_label), 
+            x = -Inf, y = Inf,
+            hjust = -0.3, vjust = 0,
+            size = 4) +
+  coord_cartesian(clip = "off") +
   geom_point(alpha = 0.4) +
   theme_classic() + 
   theme(axis.title.x = element_blank(),
-        plot.title = element_text(hjust = 0.5, size = 10)) +
+        plot.title = element_text(hjust = 0.5, size = 10),
+        panel.spacing.y = unit(0.5, "lines")) +
   labs(y = "CWM of\nmean lengths (mm)", title = "Size")
 
 ipa_length_plot + ipa_trait_wrap + plot_layout(ncol = 1, heights = c(0.5,1)) + plot_layout(guides = "collect") 
 
-ggsave(here("figures", "Fig_S3.png"), 
+ggsave(here("figures", "Fig_S4.png"), 
        width = 174, height = 160, units = "mm", dpi = 300)
 
 #by year
@@ -133,10 +145,16 @@ ggsave(here("figures", "Fig_S3.png"),
 year_trait_wrap <- fish_cwm_long %>% 
   ggplot(aes(x = year, fill = factor(traits, levels = unique(traits)))) +
   geom_bar(stat = "count", position = "fill") + 
+  geom_text(aes(label = trait_labels), 
+            x = -Inf, y = Inf,
+            hjust = -0.3, vjust = 0,
+            size = 4) +
   theme_classic() + 
   scale_fill_manual(values = trait_cols) +
+  coord_cartesian(clip = "off") +
   theme(strip.background = element_rect(fill = NA, colour = NA),
-        strip.text.x = element_text(size = 10)) +
+        strip.text.x = element_text(size = 10, margin = margin(b=1,t=1)),
+        panel.spacing.y = unit(0.5, "lines")) +
   facet_wrap(~factor(trait_group, 
                      labels = c("Transverse shape",
                                 "Vertical distribition",
@@ -144,20 +162,22 @@ year_trait_wrap <- fish_cwm_long %>%
                                 "Migration behavior"))) +
   labs(fill = "Trait value", y = "Relative abundance of\nCWM trait values", x = "Year")
 
-
-length_cwm <- fish_cwm_df %>% 
-  select(!body_shape_i:feeding_guild)
-
 year_length_plot <- length_cwm %>% 
   ggplot(aes(x = year, y = mean_length_mm)) +
   geom_boxplot() + 
+  geom_text(aes(label = plot_label), 
+            x = -Inf, y = Inf,
+            hjust = -0.3, vjust = 0,
+            size = 4) +
   geom_point(alpha = 0.4) +
+  coord_cartesian(clip = "off") +
   theme_classic() + 
   theme(axis.title.x = element_blank(),
-        plot.title = element_text(hjust = 0.5, size = 10)) +
+        plot.title = element_text(hjust = 0.5, size = 10),
+        panel.spacing.y = unit(0.5, "lines")) +
   labs(y = "CWM of\nmean lengths (mm)", title = "Size")
 
 year_length_plot + year_trait_wrap + plot_layout(ncol = 1, heights = c(0.5,1)) + plot_layout(guides = "collect") 
 
-ggsave(here("figures", "Fig_S4.png"), 
+ggsave(here("figures", "Fig_S5.png"), 
        width = 174, height = 160, units = "mm", dpi = 300)

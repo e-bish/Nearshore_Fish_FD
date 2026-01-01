@@ -86,5 +86,5 @@ combined_points %>%
   xlim(0,15) +
   scale_color_manual(values = site_colors)
 
-ggsave(here("figures", "Fig_S2.png"), 
+ggsave(here("figures", "Fig_S3.png"), 
        width = 6, height = 5.5, dpi = 300)

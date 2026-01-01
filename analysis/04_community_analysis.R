@@ -54,15 +54,6 @@ demersal_catch_by_station <- net_core %>%
   summarize(catch_sum = sum(species_count)) %>% 
   mutate(prop = catch_sum/sum(catch_sum))
 
-# demersal_catch_plot <- demersal_catch_by_station %>% 
-#   ggplot(aes(x = factor(station, labels = c("shallow", "middle", "deep")), 
-#              y = catch_sum)) +
-#   geom_bar(stat = 'identity') +
-#   theme_classic() + 
-#   labs(x = "Station", y = "Sum of catch", title = "Demersal species catch")
-# 
-# all_catch_plot + demersal_catch_plot + plot_annotation(tag_levels = 'A')
-
 net_core %>% 
   mutate(Demers = ifelse(ComName %in% demersal_spp$ComName, "Demersal", "Not Demersal")) %>% 
   group_by(Demers, station) %>% 
@@ -76,6 +67,8 @@ net_core %>%
   labs(x = "Station", y = "Sum of catch", 
        fill = "Position in the\nwater column")
 
+ggsave(here("figures", "Fig_S1.png"), 
+       width = 6, height = 5.5, dpi = 300)
 
 #### nmds 1 ####
 fish_L_all <- fish_L_full %>% 
