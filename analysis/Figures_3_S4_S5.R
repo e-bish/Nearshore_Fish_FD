@@ -181,3 +181,34 @@ year_length_plot + year_trait_wrap + plot_layout(ncol = 1, heights = c(0.5,1)) +
 
 ggsave(here("figures", "Fig_S5.png"), 
        width = 174, height = 160, units = "mm", dpi = 300)
+
+
+#### bonus fisher tests ####
+shape <- fish_cwm_long %>%
+  filter(trait_group == "body_shape_i")
+
+fisher.test(shape$ipa, shape$traits)
+fisher.test(shape$site, shape$traits)
+fisher.test(shape$year, shape$traits)
+
+vert_dist <- fish_cwm_long %>% 
+  filter(trait_group == "demers_pelag")
+
+fisher.test(vert_dist$ipa, vert_dist$traits)
+fisher.test(vert_dist$site, vert_dist$traits)
+fisher.test(vert_dist$year, vert_dist$traits)
+
+feed_guild <- fish_cwm_long %>% 
+  filter(trait_group == "feeding_guild")
+
+fisher.test(feed_guild$ipa, feed_guild$traits)
+fisher.test(feed_guild$site, feed_guild$traits)
+fisher.test(feed_guild$year, feed_guild$traits)
+
+migrations <- fish_cwm_long %>% 
+  filter(trait_group == "migrations") 
+
+fisher.test(migrations$ipa, migrations$traits)
+fisher.test(migrations$site, migrations$traits)
+fisher.test(migrations$year, migrations$traits)
+
