@@ -11,7 +11,7 @@ set.seed(2025)
 load(here("data", "net_core.Rdata")) #created in "02_tidy_data.R"
 load(here("data", "fish_L_full.Rdata")) #created in "03_create_matrices.R"
 fish_Q <- read_csv(here("data", "fish_traits.csv")) #created in "03_create_matrices.R"
-load(here("data", "wq_tb.Rdata")) #created in "Figure_S1_water_quality.R"
+load(here("data", "wq_tb.Rdata")) #created in "Figure_S2_water_quality.R"
 
 site_colors <- rev(c("#8c510a","#d8b365", 
                      "lightgoldenrod",
