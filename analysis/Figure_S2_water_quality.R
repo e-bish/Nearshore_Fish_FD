@@ -29,7 +29,7 @@ wq_tb <- wq_import %>%
 wq_tb_long <- wq_tb %>% 
   pivot_longer(c(secchi_depth_m, do_mg_l, salinity_ppm, temperature), names_to = "metric")
 
-#### Fig S1 ####
+#### Fig S2 ####
 wq_tb_long %>% 
   mutate(site = factor(site, levels = c("FAM", "TUR", "COR", "SHR", "DOK", "EDG")),
     shore_short = ifelse(ipa == "Natural2", "TURN2",
@@ -55,7 +55,7 @@ wq_tb_long %>%
              scales = "free_y")
 
 
-ggsave(here("figures", "Fig_S1.png"), 
+ggsave(here("figures", "Fig_S2.png"), 
        width = 6, height = 5.5, dpi = 300)
 
 wq_tb_long %>% 
