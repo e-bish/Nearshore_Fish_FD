@@ -15,11 +15,7 @@ load(here("data", "net_core.Rdata"))
 # extract unique sampling events to quantify sample effort (slightly unbalanced between depths and shorelines)
 sampling_events <- net_core %>% 
   select(year, month, day, site, ipa, station) %>% 
-  distinct() %>% 
-  filter(!(site == "COR" & year == "2019" & month == "Apr" & day == "30")) %>% #these COR seem like data entry errors because they were only sampled at one station and we already had complete sampling at COR in april and may. No fish recorded in either entry
-  filter(!(site == "COR" & year == "2019" & month == "May" & day == "01")) %>% 
-  filter(!(site == "TUR" & year == "2018" & month == "Jul" & day == "11")) %>%  #this is an incomplete sampling event. Complete sampling at TUR occured on 7/12/18
-  filter(!(site == "TUR" & year == "2018" & month == "Sept" & day == "11")) %>% #another month with repeat sampling; keeping only the second september TUR sampling event
+  distinct() %>%
   group_by(year, site, ipa) %>% 
   summarize(no_net_sets = n()) %>% 
   ungroup()
@@ -30,7 +26,7 @@ expand_species <- net_core %>%
   filter(!is.na(ComName))
 
 #version with catch per set by year
-fish_L_full <- net_core %>% #L is referring to the RLQ analysis
+fish_L_full <- net_core %>% #L is referring to the L matrix if this were extended into a RLQ analysis
   filter(!is.na(ComName)) %>% 
   group_by(site, ipa, year, ComName) %>% 
   summarize(spp_sum = sum(species_count)) %>% #sum across depth stations and months within each shoreline type

@@ -42,7 +42,7 @@ load_data <- function() {
   sampling_events <- net_tidy %>% 
     select(year, month, day, site, ipa, station) %>% 
     distinct() %>% 
-    filter(!(site == "COR" & year == "2019" & month == "Apr" & day == "30")) %>% #these COR seem like data entry errors because they were only sampled at one station and we already had complete sampling at COR in april and may. No fish recorded in either entry
+    filter(!(site == "COR" & year == "2019" & month == "Apr" & day == "30")) %>% #these COR are data entry errors because they were only sampled at one station and we already had complete sampling at COR in april and may. No fish recorded in either entry
     filter(!(site == "COR" & year == "2019" & month == "May" & day == "01")) %>% 
     filter(!(site == "TUR" & year == "2018" & month == "Jul" & day == "11")) %>%  #this is an incomplete sampling event. Complete sampling at TUR occured on 7/12/18
     filter(!(site == "TUR" & year == "2018" & month == "Sept" & day == "11")) #another month with repeat sampling; keeping only the second september TUR sampling event
